@@ -1,0 +1,42 @@
+# ============================================================================
+#  .gitignore — EATS Dashboard
+#  Apa pun yang rahasia, data mentah, atau bisa dibuat ulang TIDAK ikut ke GitHub.
+#  Sebelum push pertama: `git add -A` lalu `git status --short`, baca daftarnya.
+# ============================================================================
+
+# ── 1. Rahasia ──────────────────────────────────────────────────────────────
+.env
+.env.*
+*.env
+!.env.example
+!*.env.example
+*.pem
+*.key
+*.local.json
+*.local.md
+*.local.txt
+
+# ── 2. Data mentah & dokumen keuangan (contoh dummy pun tidak di-push) ──────
+*.xlsx
+*.xls
+*.csv
+*.pdf
+data-mentah/
+presentasi/
+
+# ── 3. Dependensi & hasil build ─────────────────────────────────────────────
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+.vercel/
+
+# ── 4. Log & sampah editor/OS ───────────────────────────────────────────────
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

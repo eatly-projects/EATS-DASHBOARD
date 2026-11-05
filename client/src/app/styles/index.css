@@ -1,0 +1,178 @@
+/* Tema EATS Dashboard — diambil dari PLD Dashboard (tema "Tosca": latar krem,
+ * tosca tua, aksen coral; Fraunces untuk judul, DM Sans untuk teks). Hanya terang. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Tosca theme — warm cream canvas, deep tosca primary, warm coral accent */
+    --background: 40 30% 93%;
+    --foreground: 30 15% 14%;
+
+    --card: 42 35% 97%;
+    --card-foreground: 30 15% 14%;
+
+    --popover: 42 35% 97%;
+    --popover-foreground: 30 15% 14%;
+
+    /* Deep tosca — primary brand */
+    --primary: 182 55% 28%;
+    --primary-foreground: 180 40% 98%;
+
+    --secondary: 40 22% 88%;
+    --secondary-foreground: 30 15% 20%;
+
+    --muted: 40 20% 88%;
+    --muted-foreground: 30 10% 42%;
+
+    /* Warm coral accent — pops against tosca */
+    --accent: 12 75% 60%;
+    --accent-foreground: 180 40% 98%;
+
+    --destructive: 8 70% 50%;
+    --destructive-foreground: 180 40% 98%;
+
+    --warning: 32 80% 50%;
+    --warning-foreground: 190 35% 12%;
+
+    --success: 168 55% 36%;
+    --success-foreground: 180 40% 98%;
+
+    --border: 38 18% 80%;
+    --input: 38 18% 80%;
+    --ring: 182 55% 38%;
+
+    --radius: 0.625rem;
+
+    /* Sidebar — deep tosca with bright tosca active */
+    --sidebar: 188 50% 14%;
+    --sidebar-foreground: 178 25% 82%;
+    --sidebar-muted: 178 12% 60%;
+    --sidebar-hover: 188 45% 19%;
+    --sidebar-active: 175 65% 48%;
+    --sidebar-active-foreground: 188 55% 10%;
+    --sidebar-border: 188 35% 22%;
+
+    /* Charts — tosca-led palette */
+    --chart-1: 182 55% 32%;     /* deep tosca */
+    --chart-2: 175 60% 45%;     /* bright tosca */
+    --chart-3: 12 75% 58%;      /* coral */
+    --chart-4: 38 70% 55%;      /* warm gold */
+    --chart-5: 200 45% 42%;     /* steel blue */
+
+    /* Premium gradients & shadows */
+    --gradient-hero: linear-gradient(135deg, hsl(188 55% 16%), hsl(175 50% 26%));
+    --gradient-gold: linear-gradient(135deg, hsl(175 65% 48%), hsl(182 60% 36%));
+    --shadow-card: 0 1px 2px hsl(30 20% 10% / 0.05), 0 4px 16px hsl(30 20% 20% / 0.07);
+    --shadow-elevated: 0 2px 4px hsl(30 20% 10% / 0.07), 0 12px 32px hsl(30 20% 20% / 0.11);
+    --shadow-gold: 0 8px 24px hsl(175 65% 42% / 0.28);
+  }
+
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /* Mencegah gulir mendatar yang tidak disengaja di layar kecil.
+   *
+   * DUA BARIS, DAN URUTANNYA TIDAK BOLEH DIBALIK.
+   *
+   * `clip` adalah yang kita inginkan. Dengan `hidden`, nilai overflow-y ikut
+   * berubah menjadi `auto`, sehingga html dan body menjadi wadah gulir sendiri
+   * — dan elemen `position: sticky` di dalamnya (yaitu sidebar di AppShell)
+   * berhenti menempel ke layar saat halaman digulir. `clip` memotong luapan
+   * tanpa membuat wadah gulir, jadi sticky tetap hidup.
+   *
+   * Tapi `clip` baru ada sejak Safari 16. Baris `hidden` di depannya adalah
+   * cadangan untuk iPhone yang sistemnya lebih lama: di sana sticky memang
+   * tidak bekerja, tetapi halamannya tetap tampil normal. Browser yang sudah
+   * mengenal `clip` akan memakai baris kedua dan mengabaikan yang pertama.
+   */
+  html, body {
+    /* Cadangan untuk Safari di bawah versi 16, yang belum mengenal `clip`.
+     * Browser yang tidak mengerti sebuah nilai akan mengabaikan barisnya dan
+     * memakai baris sebelumnya, jadi urutan dua baris ini tidak boleh dibalik. */
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'DM Sans', sans-serif;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* Mobile-friendly chart sizing — keep desktop unchanged */
+  @media (max-width: 640px) {
+    .recharts-responsive-container {
+      min-height: 220px;
+    }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+  }
+
+  .font-display {
+    font-family: 'Fraunces', Georgia, serif;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+}
+
+@layer utilities {
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .bg-gradient-gold {
+    background: var(--gradient-gold);
+  }
+
+  /* Shimmer skeleton */
+  .skeleton {
+    @apply relative overflow-hidden bg-muted/60 rounded-md;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--card) / 0.6),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+}
+
+@layer components {
+  /* Angka yang AI kurang yakin: cincin kuning (pola Operations: "Dicek ya, AI kurang yakin"). */
+  .ragu {
+    box-shadow: 0 0 0 2px hsl(45 93% 55%);
+    background-color: hsl(48 100% 96%);
+  }
+}

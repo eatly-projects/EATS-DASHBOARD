@@ -70,10 +70,11 @@ Excel contoh ±18 rb token masuk + ±8 rb token keluar ≈ US$0,23 per baca (±6
 Selama pengerjaan hari ini: 4× baca Excel + 1× PDF ≈ US$1,1.
 
 ### Git
-Remote `origin` = `https://github.com/eatly-projects/EATS-DASHBOARD.git` sudah ditambahkan. **Belum ada commit / push**.
-Daftar berkas yang akan ikut sudah dicek: tidak ada `.env`, kunci, kata sandi, atau berkas Excel/PDF.
+Remote `origin` = `https://github.com/eatly-projects/EATS-DASHBOARD.git`, cabang `main`. Commit pertama `f3cba2f`
+di-push atas izin Lutfi (2026-11-05). 110 berkas; dicek tidak ada `.env`, kunci, kata sandi, atau berkas Excel/PDF.
 
 ### Belum / terbuka
 - Pertanyaan untuk Lutfi: (1) definisi EBITDA, (2) arti "MGM" di biaya maklon, (3) siapa saja penggunanya & perannya.
-- Belum di-deploy ke Vercel; belum di-commit/push (menunggu izin Lutfi).
+- Belum di-deploy ke Vercel.
+- Cadangan Gemini belum pernah terpakai (Claude selalu berhasil), jadi jalurnya belum teruji sungguhan.
 - Foto (png/jpg) memakai jalur yang sama dengan PDF tetapi belum diuji dengan foto sungguhan.

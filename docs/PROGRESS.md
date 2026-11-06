@@ -2,6 +2,14 @@
 
 > Catatan kronologis. Yang terbaru di atas.
 
+## 2026-11-06 — Sidebar bisa dibuka-tutup
+
+Permintaan Lutfi. Di laptop, tombol ☰ di kiri judul halaman menciutkan sidebar jadi bilah ikon selebar 76 px.
+Nama menu muncul sebagai keterangan saat ikon disentuh kursor, dan pilihannya diingat browser (`eats.sidebar`).
+Di HP tidak berubah: tetap laci penuh. Dicek di browser lokal: ciut → buka, tetap ciut setelah dimuat ulang,
+menu aktif tetap bersorot, laci HP 390 px tetap penuh. Saat menguji ketemu dan diperbaiki: keterangan melayang
+yang langsung membungkus NavLink menghapus gaya menu aktif.
+
 ## 2026-11-06 — Tombol keluar, login awet, tampilan "Merah cabai", data dikosongkan
 
 Permintaan Lutfi setelah berhasil login di Vercel:

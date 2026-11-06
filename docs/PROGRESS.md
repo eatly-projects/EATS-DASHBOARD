@@ -2,6 +2,51 @@
 
 > Catatan kronologis. Yang terbaru di atas.
 
+## 2026-11-06 — Tombol keluar, login awet, tampilan "Merah cabai", data dikosongkan
+
+Permintaan Lutfi setelah berhasil login di Vercel:
+1. **Tombol Keluar hanya memunculkan toast.** Sebabnya `qc.clear()` ikut membuang kueri sesi yang dipantau
+   ProtectedRoute, jadi halaman tidak tahu sesinya sudah kosong. Sekarang sesi dikosongkan dulu, data lain dibuang,
+   lalu pindah ke /masuk. Terbukti di browser lokal: klik Keluar → halaman login.
+   **Login awet sampai Keluar:** cookie 365 hari dan diperpanjang otomatis saat dipakai (`wajibMasuk`). Terbukti:
+   Max-Age 365 hari; token berumur 2 hari diperpanjang, token berumur 1 jam tidak.
+2. **Tampilan lebih ramah, hijau → merah cabai.** Latar putih, sidebar putih, huruf Plus Jakarta Sans, kartu utama
+   "Untung/Rugi" + "Dari setiap Rp100 penjualan", kartu angka berikon, tanpa label huruf kapital dan nomor bagian.
+   "Membaik" kini biru (merah sudah dipakai merek dan "memburuk"). Dicek di browser lokal: desktop, HP 390 px,
+   tablet 820 px (tidak ada yang melebar ke samping); halaman Masuk, Ringkasan, Unggah, Cek dan setujui, Pengguna,
+   dan keadaan kosong.
+3. **Semua data dihapus, akun Lutfi dibuat.** Dihapus dalam satu transaksi: 447 angka laporan, 6 unggahan beserta
+   berkasnya, 3 akun uji. Pengaturan (46 pos laporan, 2 unit usaha) tetap. Akun baru: admin `boomboo.eatly@gmail.com`
+   (nama Lutfi), kata sandinya di berkas `env-akun` di akar project (masuk `.gitignore`). Terbukti bisa masuk (200).
+   `akun-baru.local.txt` (akun uji lama) dihapus. Akun uji sementara untuk cek tampilan sudah dihapus lagi.
+
+Belum: perubahan 1 dan 2 belum di-push, jadi Vercel masih versi lama. Penghapusan data dan akun baru sudah berlaku
+di production karena databasenya sama.
+
+## 2026-11-06 — Deploy ke Vercel
+
+| Project Vercel | Alamat | Root Directory |
+| :--- | :--- | :--- |
+| Backend `eats-dashboard-server` | https://eats-dashboard-server.vercel.app | `server` |
+| Frontend | https://eat-dashboard-kappa.vercel.app | `client` |
+
+Dua masalah di deploy pertama, diperbaiki di commit `7b878e5` (push atas izin Lutfi):
+1. Frontend: "The deployment could not be found on Vercel". `client/vercel.json` masih berisi alamat contoh
+   → diisi alamat backend.
+2. Backend: "Invalid export found in module server/src/app.js". Vercel otomatis mendeteksi project sebagai
+   Express dan mengambil `src/app.js` sebagai titik masuk; hanya alamat `/` yang rusak, `/api/...` sudah jalan
+   → `"framework": null` (= Other) di `server/vercel.json`.
+
+Ikut di commit yang sama: batas Claude 90 detik & Gemini 45 detik (proxy Vercel menunggu maks 120 detik),
+dan halaman Unggah menunggu status dari server bila sambungan terputus.
+
+Bukti setelah deploy ulang: backend `/` → "EATS Dashboard API"; frontend `/api/sehat` → `"status":"baik"`
+(lewat proxy); `/api/auth/saya` → 401 "Silakan masuk dulu."; login dengan akun palsu → "Email atau kata sandi
+salah" (backend tersambung ke database); halaman login tampil di browser.
+`MIGRASI_DATABASE_URL` sudah dihapus Lutfi dari env Vercel.
+
+Belum teruji di Vercel: masuk dengan akun sungguhan, unggah & baca AI (termasuk jalur "menunggu hasil").
+
 ## 2026-11-05 — Hari pertama: dari folder kosong sampai alur lengkap
 
 Lutfi meminta dashboard bergaya PLD untuk PT EATS: user mengunggah laporan (Excel/PDF/foto),

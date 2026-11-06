@@ -30,8 +30,8 @@ export function Providers({ children }) {
               fontSize: "14px",
               maxWidth: "460px",
             },
-            success: { iconTheme: { primary: "hsl(168 55% 36%)", secondary: "white" } },
-            error: { iconTheme: { primary: "hsl(8 70% 50%)", secondary: "white" } },
+            success: { iconTheme: { primary: "hsl(216 74% 45%)", secondary: "white" } },
+            error: { iconTheme: { primary: "hsl(0 66% 46%)", secondary: "white" } },
           }}
         />
       </TooltipProvider>

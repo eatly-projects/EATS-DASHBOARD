@@ -45,7 +45,7 @@ Buka **http://localhost:5178**. Frontend meneruskan `/api` ke backend lewat prox
 | `npm run dev` | Jalankan backend dengan muat ulang otomatis |
 | `npm run migrate` | Tampilkan migrasi yang belum terpasang (tambah `-- --ya` untuk menjalankan). Memakai `MIGRASI_DATABASE_URL` |
 | `npm run peran:buat -- --ya` | Buat/ganti kata sandi peran `finance_app`, lalu tulis `DATABASE_URL` baru ke `.env` |
-| `npm run pengguna:buat -- --email a@b.com --nama "Nama" --peran admin` | Buat akun login (kata sandi diketik). Tambah `--sandi-acak` untuk kata sandi acak yang ditulis ke `akun-baru.local.txt` |
+| `npm run pengguna:buat -- --email a@b.com --nama "Nama" --peran admin` | Buat akun login (kata sandi diketik). Tambah `--sandi-acak` untuk kata sandi acak yang ditulis ke `akun-baru.local.txt`. Akun Lutfi: kata sandinya di berkas `env-akun` |
 | `npm run cek:db` | Cek sambungan & isi singkat database |
 | `npm run uji:isolasi` | Buktikan `finance_app` hanya bisa menyentuh schema `finance` |
 | `npm run uji` | Uji rumus laba rugi & penyusun rencana |
@@ -87,5 +87,5 @@ commit;
 
 ## Keamanan
 
-- Jangan pernah meng-commit `.env` atau `akun-baru.local.txt` (sudah di `.gitignore`).
+- Jangan pernah meng-commit `.env`, `env-akun`, atau `akun-baru.local.txt` (sudah di `.gitignore`).
 - Berkas Excel/PDF/CSV juga diabaikan git karena berisi angka keuangan.

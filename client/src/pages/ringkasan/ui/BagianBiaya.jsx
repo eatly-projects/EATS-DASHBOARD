@@ -112,7 +112,7 @@ export function BagianBiaya({ periode, bulanIni, bulanLalu, daftarPos }) {
               </table>
             )}
             {rincianLain.some((r) => r.nilai < 0) && (
-              <p className="mt-3 text-xs text-muted-foreground">Angka hijau bernilai minus: pemasukan kecil yang mengurangi biaya.</p>
+              <p className="mt-3 text-xs text-muted-foreground">Angka biru bernilai minus: pemasukan kecil yang mengurangi biaya.</p>
             )}
           </CardBox>
         </div>

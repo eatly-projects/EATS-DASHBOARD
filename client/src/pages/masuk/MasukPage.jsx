@@ -27,9 +27,9 @@ export function MasukPage() {
           <div className="relative bg-gradient-hero px-6 py-7 text-white sm:px-8">
             <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[hsl(var(--accent))]/20 blur-2xl" aria-hidden />
             <div className="relative flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-gold font-display text-xl font-semibold shadow-gold">E</div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-xl font-extrabold text-[hsl(var(--primary))] shadow-sm">E</div>
               <div>
-                <p className="font-display text-xl font-medium">EATS Dashboard</p>
+                <p className="font-display text-xl font-bold">EATS Dashboard</p>
                 <p className="text-sm text-white/70">Laporan keuangan PT EATS</p>
               </div>
             </div>
@@ -38,7 +38,7 @@ export function MasukPage() {
             </p>
           </div>
           <div className="px-6 py-7 sm:px-8">
-            <h1 className="font-display text-2xl font-medium text-foreground">Masuk</h1>
+            <h1 className="font-display text-2xl font-bold text-foreground">Masuk</h1>
             <p className="mb-5 mt-1 text-sm text-muted-foreground">Gunakan akun yang diberikan admin.</p>
             {sesi.isPending ? (
               <div className="space-y-4">

@@ -43,8 +43,11 @@ total milik berkas itu sendiri (TOTAL REVENUE, Gross Profit, NET PROFIT, EBITDA,
 | Deploy | Vercel, frontend & backend dua project terpisah, region `sin1` |
 | Port lokal | frontend **5178**, backend **4910** (`strictPort`) |
 
-Tampilan meniru PLD Dashboard (`C:\projects\PLD-dashboard\clone_code\web`): latar krem, warna tosca,
-aksen coral, judul Fraunces, teks DM Sans, kartu angka, bagian bernomor dengan kalimat kesimpulan.
+Tampilan awalnya meniru PLD Dashboard (`C:\projects\PLD-dashboard\clone_code\web`). Sejak 6 Nov 2026 (permintaan
+Lutfi: lebih ramah pengguna, hijau diganti merah cabai) memakai tema **"Merah cabai"**: latar putih netral, merah
+cabai untuk merek dan aksen, huruf Plus Jakarta Sans, sidebar putih. Arti warna: **biru = membaik/cocok/disetujui**,
+merah = memburuk/rugi, kuning = perlu dicek. Ringkasan dibuka dengan kartu "Untung/Rugi" + "Dari setiap Rp100
+penjualan". Bagian tidak lagi bernomor.
 
 ## 3. Database (schema `finance`)
 
@@ -109,7 +112,8 @@ berselisih Rp120.000 per bulan. Itu memang ketidakcocokan di dalam berkasnya.
 ## 6. Kontrak API (`/api`, JSON)
 
 Bentuk jawaban: `{ ok: true, data }` atau `{ ok: false, error: { code, message } }`.
-Sesi: cookie httpOnly `eats_sesi` (JWT 12 jam, `SameSite=Lax`). Di lokal lewat proxy Vite,
+Sesi: cookie httpOnly `eats_sesi` (JWT 365 hari, diperpanjang otomatis paling sering sehari sekali; berakhir saat
+menekan Keluar, akun dinonaktifkan, atau setahun tidak dibuka; `SameSite=Lax`). Di lokal lewat proxy Vite,
 di production lewat rewrite Vercel, jadi browser melihat satu domain.
 
 ### Auth

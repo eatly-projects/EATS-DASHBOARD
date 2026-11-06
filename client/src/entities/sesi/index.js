@@ -44,9 +44,12 @@ export function useKeluar() {
     mutationFn: () => apiPost("/auth/keluar"),
     meta: { pesanMemuat: "Keluar…", pesanBerhasil: "Anda sudah keluar." },
     // Sukses atau gagal, data pengguna sebelumnya tidak boleh tersisa di layar.
+    // JANGAN pakai qc.clear(): itu ikut membuang kueri sesi yang sedang dipantau
+    // ProtectedRoute, sehingga halaman tidak tahu sesinya sudah kosong dan tetap
+    // di dashboard (hanya toast yang muncul). Sesi dikosongkan dulu, baru data lain.
     onSettled: () => {
-      qc.clear();
       qc.setQueryData(KUNCI_SESI, null);
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== KUNCI_SESI[0] });
     },
   });
 }

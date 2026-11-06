@@ -152,7 +152,7 @@ export function BagianRincian({ unitNama, dataUnit, periodeList, periodeTerpilih
                   <tr key={`j-${i}`}>
                     <td
                       colSpan={periodeList.length + 2}
-                      className="sticky left-0 border-b border-border/40 bg-card px-3 pb-1 pt-4 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+                      className="sticky left-0 border-b border-border/40 bg-card px-3 pb-1 pt-4 text-left text-xs font-bold text-[hsl(var(--primary))]"
                     >
                       {b.label}
                     </td>

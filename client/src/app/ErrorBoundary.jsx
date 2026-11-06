@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-6">
         <div className="w-full max-w-lg rounded-xl border border-destructive/30 bg-card p-6 shadow-card">
-          <h1 className="font-display text-xl font-medium text-destructive">Halaman mengalami masalah</h1>
+          <h1 className="font-display text-xl font-bold text-destructive">Halaman mengalami masalah</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Silakan muat ulang halaman. Kalau masih terjadi, foto layar ini dan kirim ke tim pengembang.
           </p>

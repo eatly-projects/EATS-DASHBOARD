@@ -1,7 +1,6 @@
 /**
- * Konfigurasi Tailwind — diambil dari PLD Dashboard (clone_code/web) supaya
- * warna, radius, dan font sama: tema "Tosca" (krem + tosca + coral),
- * judul Fraunces, teks DM Sans. Hanya tema terang.
+ * Konfigurasi Tailwind. Warna diambil dari variabel CSS di src/app/styles/index.css
+ * (tema "Merah cabai"); satu keluarga huruf Plus Jakarta Sans. Hanya tema terang.
  */
 import animate from "tailwindcss-animate";
 
@@ -16,9 +15,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["DM Sans", "sans-serif"],
-        display: ["Fraunces", "Georgia", "serif"],
-        serif: ["Fraunces", "Georgia", "serif"],
+        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

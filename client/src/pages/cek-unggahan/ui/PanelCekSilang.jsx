@@ -90,7 +90,7 @@ export function PanelCekSilang({ hasil, unitPerKode }) {
           <FiCheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-[hsl(var(--success))]" aria-hidden />
         )}
         <div className="min-w-0 flex-1">
-          <p className={cn("font-display text-base font-medium", tidakCocok.length ? "text-destructive" : "text-[hsl(var(--success))]")}>
+          <p className={cn("font-display text-base font-bold", tidakCocok.length ? "text-destructive" : "text-[hsl(var(--success))]")}>
             {tidakCocok.length
               ? `${tidakCocok.length} dari ${hasil.length} total TIDAK cocok dengan berkas`
               : `Semua total cocok (${cocok.length} pemeriksaan)`}

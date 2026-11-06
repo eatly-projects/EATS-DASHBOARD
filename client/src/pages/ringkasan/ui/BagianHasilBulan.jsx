@@ -1,12 +1,22 @@
-// Bagian 1 · Hasil bulan ini: kartu angka utama + tabel bulan ini vs bulan lalu
-// vs total tahun berjalan.
+// Hasil bulan terpilih: kartu utama (untung/rugi + "dari setiap Rp100 penjualan"),
+// kartu angka utama, dan tabel bulan ini vs bulan lalu vs total tahun berjalan.
+import { FiActivity, FiCreditCard, FiLayers, FiPackage, FiShoppingCart, FiTrendingUp } from "react-icons/fi";
 import { CardBox, EmptyState, KpiTile, PerubahanPill, SectionHeader } from "@/shared/ui/bits";
-import { MountFade } from "@/shared/ui/motion";
 import { cn } from "@/shared/lib/cn";
+import { KartuHasil } from "./KartuHasil";
 import { namaBulan, periodeSebelum, persen, rentangBulan, rupiah } from "@/shared/lib/format";
-import { METRIK_UTAMA, kesimpulanHasil, perubahan } from "../lib/ringkasan";
+import { METRIK_UTAMA, perubahan } from "../lib/ringkasan";
 
 const ada = (v) => v !== null && v !== undefined && Number.isFinite(Number(v));
+
+const IKON = {
+  total_pendapatan: FiShoppingCart,
+  total_hpp: FiPackage,
+  laba_kotor: FiLayers,
+  total_biaya_operasional: FiCreditCard,
+  laba_bersih: FiTrendingUp,
+  ebitda: FiActivity,
+};
 
 function SelSelisih({ selisih, naikBaik, jenis = "rupiah" }) {
   if (!ada(selisih)) return <span className="text-muted-foreground">—</span>;
@@ -25,7 +35,6 @@ function SelSelisih({ selisih, naikBaik, jenis = "rupiah" }) {
 
 export function BagianHasilBulan({ unitNama, periode, ukuranIni, ukuranLalu, ukuranTahunBerjalan, periodeTahunBerjalan }) {
   const periodeLalu = periodeSebelum(periode);
-  const { teks, nada } = kesimpulanHasil(unitNama, periode, ukuranIni, ukuranLalu);
   const labelTahunBerjalan = `Total ${rentangBulan(periodeTahunBerjalan)}`;
 
   const barisTabel = [];
@@ -44,21 +53,24 @@ export function BagianHasilBulan({ unitNama, periode, ukuranIni, ukuranLalu, uku
 
   return (
     <section aria-labelledby="bagian-1">
-      <SectionHeader id="bagian-1" nomor={1} judul="Hasil bulan ini" kesimpulan={teks} nada={nada} />
+      <SectionHeader id="bagian-1" judul={`Hasil ${namaBulan(periode, { panjang: true })}`} />
 
       {!ukuranIni ? (
         <EmptyState judul={`Belum ada data ${namaBulan(periode, { panjang: true })}`} keterangan={`${unitNama} belum punya angka untuk bulan ini.`} />
       ) : (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-            {METRIK_UTAMA.map((m, i) => {
+          <KartuHasil unitNama={unitNama} periode={periode} ukuranIni={ukuranIni} ukuranLalu={ukuranLalu} />
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {METRIK_UTAMA.map((m) => {
               const ini = ukuranIni?.[m.kunci];
               const lalu = ukuranLalu?.[m.kunci];
               const { persen: persenUbah } = perubahan(ini, lalu);
               const rasio = m.rasio ? ukuranIni?.[m.rasio] : null;
               return (
-                <MountFade key={m.kunci} delay={i * 0.04}>
                   <KpiTile
+                    key={m.kunci}
+                    ikon={IKON[m.kunci]}
                     label={m.label}
                     nilai={rupiah(ini)}
                     nada={m.kunci.startsWith("laba") || m.kunci === "ebitda" ? (Number(ini) < 0 ? "buruk" : undefined) : undefined}
@@ -70,14 +82,13 @@ export function BagianHasilBulan({ unitNama, periode, ukuranIni, ukuranLalu, uku
                         : `${namaBulan(periodeLalu)}: belum ada data`
                     }
                   />
-                </MountFade>
               );
             })}
           </div>
 
           <CardBox
             title="Perbandingan"
-            subtitle={`${namaBulan(periode, { panjang: true })} dibanding bulan sebelumnya, dan total sejak awal tahun. Hijau = membaik, merah = memburuk.`}
+            subtitle={`${namaBulan(periode, { panjang: true })} dibanding bulan sebelumnya, dan total sejak awal tahun. Biru = membaik, merah = memburuk.`}
           >
             <div className="relative -mx-3 overflow-x-auto sm:mx-0">
               <table className="w-full min-w-[640px] text-sm tabular-nums">

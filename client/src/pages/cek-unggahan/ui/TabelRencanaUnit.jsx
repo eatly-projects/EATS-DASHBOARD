@@ -103,7 +103,7 @@ export function TabelRencanaUnit({
             />
           ))}
           <tr>
-            <td colSpan={periodeList.length + 1} className="sticky left-0 border-b border-border/40 bg-card px-3 pb-1 pt-4 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <td colSpan={periodeList.length + 1} className="sticky left-0 border-b border-border/40 bg-card px-3 pb-1 pt-4 text-left text-xs font-bold text-[hsl(var(--primary))]">
               Hasil hitung (ikut berubah saat angka diubah)
             </td>
           </tr>
@@ -146,7 +146,7 @@ function GrupBaris({ g, unit, periodeList, nilai, lama, bulanLama, info, asli, d
       <tr>
         <td
           colSpan={periodeList.length + 1}
-          className="sticky left-0 border-b border-border/40 bg-card px-3 pb-1 pt-4 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+          className="sticky left-0 border-b border-border/40 bg-card px-3 pb-1 pt-4 text-left text-xs font-bold text-[hsl(var(--primary))]"
         >
           {g.nama}
         </td>

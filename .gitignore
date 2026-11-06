@@ -46,3 +46,7 @@ bukti*.png
 bukti*.jpg
 /*.png
 /*.jpg
+
+# Akun pribadi Lutfi (kata sandi)
+env-akun
+env-akun.*

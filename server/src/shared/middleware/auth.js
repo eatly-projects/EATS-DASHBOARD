@@ -1,13 +1,20 @@
 // Sesi login: JWT di cookie httpOnly `eats_sesi`. Setiap permintaan membaca
 // ulang pengguna dari database, jadi akun yang dinonaktifkan langsung terkunci
 // tanpa menunggu token kedaluwarsa.
+//
+// Permintaan Lutfi: sekali masuk, tidak perlu masuk lagi sampai menekan Keluar.
+// Caranya sesi "bergulir": cookie berlaku 365 hari dan diperpanjang otomatis
+// (paling sering sehari sekali) setiap kali dashboard dipakai. Sesi baru
+// berakhir kalau pengguna menekan Keluar, akunnya dinonaktifkan, atau dashboard
+// tidak dibuka sama sekali selama setahun.
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env.js";
 import { kueri } from "../db/pool.js";
 import { AppError, galat } from "../http.js";
 
 export const NAMA_COOKIE = "eats_sesi";
-const UMUR_JAM = 12;
+const UMUR_HARI = 365;
+const PERPANJANG_SETELAH_DETIK = 24 * 3600;
 
 export const opsiCookie = () => ({
   httpOnly: true,
@@ -19,15 +26,15 @@ export const opsiCookie = () => ({
 export function pasangSesi(res, pengguna) {
   const token = jwt.sign({ sub: pengguna.id }, env.jwtSecret, {
     algorithm: "HS256",
-    expiresIn: `${UMUR_JAM}h`,
+    expiresIn: `${UMUR_HARI}d`,
     issuer: "eats-dashboard",
   });
-  res.cookie(NAMA_COOKIE, token, { ...opsiCookie(), maxAge: UMUR_JAM * 3600 * 1000 });
+  res.cookie(NAMA_COOKIE, token, { ...opsiCookie(), maxAge: UMUR_HARI * 24 * 3600 * 1000 });
 }
 
 export const hapusSesi = (res) => res.clearCookie(NAMA_COOKIE, opsiCookie());
 
-export async function wajibMasuk(req, _res, next) {
+export async function wajibMasuk(req, res, next) {
   const token = req.cookies?.[NAMA_COOKIE];
   if (!token) return next(galat.belumMasuk());
   let isi;
@@ -41,6 +48,7 @@ export async function wajibMasuk(req, _res, next) {
   if (!pengguna) return next(galat.belumMasuk());
   if (!pengguna.aktif) return next(new AppError(403, "AKUN_NONAKTIF", "Akun Anda sudah dinonaktifkan. Hubungi admin."));
   req.pengguna = pengguna;
+  if (Date.now() / 1000 - (isi.iat ?? 0) > PERPANJANG_SETELAH_DETIK) pasangSesi(res, pengguna);
   next();
 }
 

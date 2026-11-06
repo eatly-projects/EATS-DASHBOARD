@@ -59,7 +59,7 @@ function PanelMembaca({ berkas, tahap, mulai }) {
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-display text-lg font-medium text-foreground">
+        <p className="font-display text-lg font-bold text-foreground">
           {tahap === "mengunggah" ? "Mengunggah berkas…" : "AI sedang membaca berkas…"}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -248,7 +248,7 @@ export function KotakUnggah() {
               <FiUploadCloud className="h-8 w-8" />
             </div>
             <div>
-              <p className="font-display text-lg font-medium text-foreground">Tarik berkas ke sini, atau klik untuk memilih</p>
+              <p className="font-display text-lg font-bold text-foreground">Tarik berkas ke sini, atau klik untuk memilih</p>
               <p className="mt-1 text-sm text-muted-foreground">Excel (.xlsx), PDF, atau foto (.png, .jpg, .jpeg, .webp) · maksimal 4 MB · satu berkas</p>
             </div>
             <span className="mt-1 inline-flex h-10 items-center gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
@@ -266,7 +266,7 @@ export function KotakUnggah() {
               <FiAlertTriangle className="h-6 w-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-display text-lg font-medium text-foreground">Berkas belum berhasil dibaca</p>
+              <p className="font-display text-lg font-bold text-foreground">Berkas belum berhasil dibaca</p>
               <p className="mt-1 text-sm text-muted-foreground">{berkas?.name}</p>
               <p className="mt-2 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">{pesanGagal}</p>
               <div className="mt-4 flex flex-wrap gap-2">

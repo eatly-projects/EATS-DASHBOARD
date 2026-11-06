@@ -1,5 +1,5 @@
-// Halaman utama: Ringkasan laba rugi bergaya PLD — bagian bernomor bertumpuk,
-// tiap bagian dengan satu kalimat kesimpulan.
+// Halaman utama: Ringkasan laba rugi — pemilih unit & bulan, kartu utama
+// untung/rugi, lalu bagian-bagian bertumpuk dengan satu kalimat kesimpulan.
 import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { FiFileText, FiUploadCloud } from "react-icons/fi";
@@ -53,10 +53,10 @@ function AsalData({ asal, unitKode, periode, unitPerKode, gabunganUnitAda, semua
 
   if (!perUnggahan.size && !kurang.length) return null;
   return (
-    <div className="space-y-1.5 rounded-lg border border-border/60 bg-card/70 px-3 py-2.5 text-xs text-muted-foreground">
+    <div className="space-y-1.5 border-t border-border pt-3 text-sm text-muted-foreground">
       {[...perUnggahan.values()].map((a) => (
         <p key={a.unggahan_id ?? a.nama_berkas} className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-          <FiFileText className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--primary))]" aria-hidden />
+          <FiFileText className="h-4 w-4 shrink-0 text-[hsl(var(--primary))]" aria-hidden />
           <span>
             Data {namaBulan(periode, { panjang: true })}
             {perUnggahan.size > 1 || unitKode === KODE_GABUNGAN ? ` (${a.unit.join(" dan ")})` : ""} dari{" "}
@@ -141,7 +141,7 @@ export function RingkasanPage() {
 
   return (
     <div className="space-y-10">
-      <div className="space-y-3">
+      <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <PemilihLaporan
             unitList={unitList}
@@ -155,7 +155,7 @@ export function RingkasanPage() {
             tahun={tahun}
             onTahun={pilihan.aturTahun}
           />
-          {laporan.isFetching && <span className="text-xs text-muted-foreground">Memperbarui…</span>}
+          {laporan.isFetching && <span className="text-sm text-muted-foreground">Memperbarui…</span>}
         </div>
         <AsalData
           asal={L?.asal}

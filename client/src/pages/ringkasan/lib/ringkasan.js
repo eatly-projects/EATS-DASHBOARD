@@ -2,7 +2,7 @@
 // dan `ukuran` per unit per bulan (termasuk GABUNGAN); di sini hanya
 // perbandingan, total tahun berjalan, dan kalimat kesimpulan.
 import { ukuranRentang } from "@/entities/laporan";
-import { namaBulan, normalPeriode, pecahPeriode, periodeSebelum, rupiah, persen } from "@/shared/lib/format";
+import { namaBulan, normalPeriode, pecahPeriode, rupiah } from "@/shared/lib/format";
 
 export const METRIK_UTAMA = [
   { kunci: "total_pendapatan", label: "Pendapatan", naikBaik: true },
@@ -43,26 +43,6 @@ export function ukuranGabunganBulan(dataUnit, daftarPeriode, daftarPos) {
   const peta = daftarPeriode.map((p) => dataUnit?.[p]?.pos).filter(Boolean);
   if (!peta.length) return null;
   return ukuranRentang(peta, daftarPos);
-}
-
-/** Kalimat kesimpulan bagian 1, berdasarkan laba bersih. */
-export function kesimpulanHasil(unitNama, periode, ukuranIni, ukuranLalu) {
-  const lb = ukuranIni?.laba_bersih;
-  const bulan = namaBulan(periode, { panjang: true });
-  if (!ada(lb)) return { teks: `${unitNama} belum punya angka laba bersih untuk ${bulan}.`, nada: "netral" };
-  const { selisih } = perubahan(lb, ukuranLalu?.laba_bersih);
-  const rugi = Number(lb) < 0;
-  let teks = `${rugi ? "Rugi bersih" : "Laba bersih"} ${bulan} ${rupiah(lb)}`;
-  if (ada(selisih)) {
-    const lalu = namaBulan(periodeSebelum(periode), { panjang: true, tanpaTahun: true });
-    if (Math.abs(selisih) < 1) teks += `, sama dengan ${lalu}`;
-    else teks += `, ${selisih > 0 ? "naik" : "turun"} ${rupiah(Math.abs(selisih))} dari ${lalu}`;
-  }
-  const m = ukuranIni?.margin_laba_bersih;
-  if (ada(m)) teks += ` (margin ${persen(m)})`;
-  teks += ".";
-  const nada = rugi ? "buruk" : ada(selisih) && selisih < 0 ? "waspada" : "baik";
-  return { teks, nada };
 }
 
 export function kesimpulanTren(dataUnit, periodeList) {

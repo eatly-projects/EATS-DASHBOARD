@@ -1,6 +1,11 @@
-/* Tema EATS Dashboard — diambil dari PLD Dashboard (tema "Tosca": latar krem,
- * tosca tua, aksen coral; Fraunces untuk judul, DM Sans untuk teks). Hanya terang. */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap');
+/* Tema EATS Dashboard — "Merah cabai" (permintaan Lutfi 2026-11-06: tampilan lebih
+ * ramah pengguna, warna hijau diganti merah cabai). Latar putih netral, merah cabai
+ * sebagai warna merek dan aksen, satu keluarga huruf: Plus Jakarta Sans (karya
+ * Tokotype, Indonesia). Hanya tema terang.
+ *
+ * "Membaik / cocok / disetujui" memakai BIRU, bukan hijau dan bukan merah: merah
+ * sudah dipakai merek dan untuk "memburuk / rugi", jadi biru menjaga makna tetap jelas. */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,67 +13,66 @@
 
 @layer base {
   :root {
-    /* Tosca theme — warm cream canvas, deep tosca primary, warm coral accent */
-    --background: 40 30% 93%;
-    --foreground: 30 15% 14%;
+    --background: 30 10% 97%;
+    --foreground: 20 14% 11%;
 
-    --card: 42 35% 97%;
-    --card-foreground: 30 15% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 11%;
 
-    --popover: 42 35% 97%;
-    --popover-foreground: 30 15% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 11%;
 
-    /* Deep tosca — primary brand */
-    --primary: 182 55% 28%;
-    --primary-foreground: 180 40% 98%;
+    /* Merah cabai — warna merek */
+    --primary: 0 66% 46%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 22% 88%;
-    --secondary-foreground: 30 15% 20%;
+    --secondary: 30 10% 94%;
+    --secondary-foreground: 20 14% 18%;
 
-    --muted: 40 20% 88%;
-    --muted-foreground: 30 10% 42%;
+    --muted: 30 10% 94%;
+    --muted-foreground: 20 6% 40%;
 
-    /* Warm coral accent — pops against tosca */
-    --accent: 12 75% 60%;
-    --accent-foreground: 180 40% 98%;
+    /* Merah sangat muda untuk sorotan & hover */
+    --accent: 0 80% 96%;
+    --accent-foreground: 0 66% 36%;
 
-    --destructive: 8 70% 50%;
-    --destructive-foreground: 180 40% 98%;
+    --destructive: 354 72% 42%;
+    --destructive-foreground: 0 0% 100%;
 
-    --warning: 32 80% 50%;
-    --warning-foreground: 190 35% 12%;
+    --warning: 35 92% 44%;
+    --warning-foreground: 20 14% 11%;
 
-    --success: 168 55% 36%;
-    --success-foreground: 180 40% 98%;
+    /* "Membaik" — biru */
+    --success: 216 74% 45%;
+    --success-foreground: 0 0% 100%;
 
-    --border: 38 18% 80%;
-    --input: 38 18% 80%;
-    --ring: 182 55% 38%;
+    --border: 30 8% 89%;
+    --input: 30 8% 84%;
+    --ring: 0 66% 46%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
-    /* Sidebar — deep tosca with bright tosca active */
-    --sidebar: 188 50% 14%;
-    --sidebar-foreground: 178 25% 82%;
-    --sidebar-muted: 178 12% 60%;
-    --sidebar-hover: 188 45% 19%;
-    --sidebar-active: 175 65% 48%;
-    --sidebar-active-foreground: 188 55% 10%;
-    --sidebar-border: 188 35% 22%;
+    /* Sidebar putih, menu aktif merah muda dengan teks merah cabai */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 20 10% 28%;
+    --sidebar-muted: 20 6% 48%;
+    --sidebar-hover: 30 10% 95%;
+    --sidebar-active: 0 80% 95.5%;
+    --sidebar-active-foreground: 0 66% 38%;
+    --sidebar-border: 30 8% 90%;
 
-    /* Charts — tosca-led palette */
-    --chart-1: 182 55% 32%;     /* deep tosca */
-    --chart-2: 175 60% 45%;     /* bright tosca */
-    --chart-3: 12 75% 58%;      /* coral */
-    --chart-4: 38 70% 55%;      /* warm gold */
-    --chart-5: 200 45% 42%;     /* steel blue */
+    /* Grafik: merah cabai, arang, biru, kunyit, abu kebiruan */
+    --chart-1: 0 66% 46%;
+    --chart-2: 20 10% 24%;
+    --chart-3: 216 74% 45%;
+    --chart-4: 40 88% 50%;
+    --chart-5: 215 16% 52%;
 
-    /* Premium gradients & shadows */
-    --gradient-hero: linear-gradient(135deg, hsl(188 55% 16%), hsl(175 50% 26%));
-    --gradient-gold: linear-gradient(135deg, hsl(175 65% 48%), hsl(182 60% 36%));
-    --shadow-card: 0 1px 2px hsl(30 20% 10% / 0.05), 0 4px 16px hsl(30 20% 20% / 0.07);
-    --shadow-elevated: 0 2px 4px hsl(30 20% 10% / 0.07), 0 12px 32px hsl(30 20% 20% / 0.11);
-    --shadow-gold: 0 8px 24px hsl(175 65% 42% / 0.28);
+    --gradient-hero: linear-gradient(135deg, hsl(0 66% 44%), hsl(0 70% 31%));
+    --gradient-gold: linear-gradient(135deg, hsl(0 72% 52%), hsl(0 66% 40%));
+    --shadow-card: 0 1px 2px hsl(20 14% 11% / 0.04), 0 1px 3px hsl(20 14% 11% / 0.05);
+    --shadow-elevated: 0 4px 10px hsl(20 14% 11% / 0.06), 0 16px 40px hsl(20 14% 11% / 0.10);
+    --shadow-gold: 0 6px 18px hsl(0 66% 46% / 0.28);
   }
 
 }
@@ -103,8 +107,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'DM Sans', sans-serif;
-    font-feature-settings: "ss01", "cv11";
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 
   /* Mobile-friendly chart sizing — keep desktop unchanged */
@@ -115,13 +118,13 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Fraunces', Georgia, serif;
-    font-optical-sizing: auto;
-    letter-spacing: -0.01em;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    letter-spacing: -0.015em;
   }
 
   .font-display {
-    font-family: 'Fraunces', Georgia, serif;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    letter-spacing: -0.015em;
   }
 
   .tabular-nums {

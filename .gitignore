@@ -40,3 +40,9 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Tangkapan layar bukti (bisa memuat kunci/kata sandi)
+bukti*.png
+bukti*.jpg
+/*.png
+/*.jpg

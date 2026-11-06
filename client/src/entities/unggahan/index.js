@@ -71,6 +71,9 @@ export function useBacaUnggahan() {
   return useMutation({
     mutationFn: (id) => apiPost(`/unggahan/${id}/baca`),
     meta: {
+      // Galat ditangani KotakUnggah: sambungan yang putus (batas 120 detik proxy
+      // Vercel) bukan berarti gagal — server tetap membaca, jadi statusnya ditunggu.
+      diamkanGalat: true,
       pesanMemuat: "AI sedang membaca berkas…",
       pesanBerhasil: (u) =>
         u?.status === "menunggu_cek" ? "Berkas selesai dibaca. Silakan dicek." : null,

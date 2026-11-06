@@ -19,11 +19,13 @@ const MODEL_GEMINI = [
   { model: "gemini-3.5-flash", label: "Gemini 3.5 Flash" },
   { model: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash Lite" },
 ];
-// Pemetaan satu buku kerja ±100 baris butuh jawaban beberapa ribu token, jadi
-// batasnya lebih longgar daripada PO (45 detik). Claude tidak diulang
-// (maxRetries 0): kalau gagal langsung pindah ke cadangan.
-const BATAS_CLAUDE_MS = 150_000;
-const BATAS_GEMINI_MS = 90_000;
+// Pemetaan satu buku kerja ±100 baris butuh ±60 detik (uji 2026-11-05), jadi
+// batasnya lebih longgar daripada PO (45 detik). Tetapi di production browser
+// lewat proxy Vercel yang menunggu paling lama 120 detik, jadi Claude + satu
+// cadangan sebaiknya muat di situ. Kalau tetap lewat, halaman Unggah menunggu
+// statusnya (server tetap menyimpan hasil). Claude tidak diulang (maxRetries 0).
+const BATAS_CLAUDE_MS = 90_000;
+const BATAS_GEMINI_MS = 45_000;
 const FOTO_CLAUDE = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 const UKURAN_KODE = DAFTAR_UKURAN.map((u) => u.kode);

@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/cn";
 import { tanggalJam, ukuranBerkas } from "@/shared/lib/format";
+import { apiGet } from "@/shared/api/client";
 import {
   ACCEPT_INPUT,
   STATUS,
@@ -103,22 +104,54 @@ export function KotakUnggah() {
     if (inputRef.current) inputRef.current.value = "";
   };
 
+  const selesaiBaca = (id, u) => {
+    if (u?.status === "menunggu_cek") {
+      navigate(`/unggahan/${id}`);
+      return;
+    }
+    const pesan = u?.pesan_gagal || "AI tidak berhasil membaca berkas ini.";
+    setPesanGagal(pesan);
+    setTahap("gagal");
+    toast.error(pesan, { duration: 6000 });
+  };
+
+  // Di Vercel, proxy /api memutus sambungan setelah 120 detik tanpa jawaban,
+  // padahal server tetap membaca dan menyimpan hasilnya. Jadi kalau sambungan
+  // putus (bukan galat dari server), status unggahan ditanyakan berkala.
+  const tungguHasil = async (id) => {
+    const batas = Date.now() + 5 * 60 * 1000;
+    while (Date.now() < batas) {
+      await new Promise((r) => setTimeout(r, 5000));
+      try {
+        const d = await apiGet(`/unggahan/${id}`);
+        const u = d?.unggahan ?? d;
+        if (u?.status && u.status !== "diunggah") return u;
+      } catch {
+        // coba lagi pada putaran berikutnya
+      }
+    }
+    return null;
+  };
+
   const jalankanBaca = async (id) => {
     setTahap("membaca");
     setPesanGagal("");
     try {
-      const u = await baca.mutateAsync(id);
-      if (u?.status === "menunggu_cek") {
-        navigate(`/unggahan/${id}`);
+      selesaiBaca(id, await baca.mutateAsync(id));
+    } catch (e) {
+      const sambunganPutus = !e.status || [502, 503, 504].includes(e.status);
+      if (sambunganPutus) {
+        const u = await tungguHasil(id);
+        if (u) return selesaiBaca(id, u);
+        const pesan = "AI masih membaca berkas ini. Lihat statusnya di Riwayat unggahan beberapa menit lagi.";
+        setPesanGagal(pesan);
+        setTahap("gagal");
+        toast(pesan, { duration: 8000 });
         return;
       }
-      const pesan = u?.pesan_gagal || "AI tidak berhasil membaca berkas ini.";
-      setPesanGagal(pesan);
-      setTahap("gagal");
-      toast.error(pesan, { duration: 6000 });
-    } catch (e) {
       setPesanGagal(e.message);
       setTahap("gagal");
+      toast.error(e.message, { duration: 6000 });
     }
   };
 

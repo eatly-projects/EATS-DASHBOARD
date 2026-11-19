@@ -1,5 +1,5 @@
-// Layar daftar ala Accurate: chip filter, tombol muat ulang, kolom cari, kotak
-// jumlah data, lalu tabel berkepala gelap. Di HP tabel diganti kartu.
+// Layar daftar ala Accurate: chip filter, kolom cari, jumlah data, tombol muat
+// ulang, lalu tabel. Di HP dan tablet tabel diganti kartu, supaya kolom tidak perlu digeser.
 import { FiRefreshCw, FiSearch } from "react-icons/fi";
 import { EmptyState, ErrorState, TableSkeleton } from "@/shared/ui/bits";
 import { Button } from "@/shared/ui/button";
@@ -24,32 +24,39 @@ export function DaftarData({
   memuatLagi,
   kosong = { judul: "Belum ada data" },
   kartuHp,
+  satuan = "data",
+  petunjukCari = "Cari…",
 }) {
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-card p-3 shadow-card sm:p-4">
       {filter && <div className="flex flex-wrap gap-2">{filter}</div>}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9 shrink-0 hover:bg-muted hover:text-foreground"
-          onClick={onMuatUlang}
-          aria-label="Muat ulang"
-          title="Muat ulang"
-        >
-          <FiRefreshCw className={cn("h-4 w-4", memuat && "animate-spin")} aria-hidden />
-        </Button>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        {onCari && (
+          <div className="relative w-full min-w-0 sm:w-auto sm:max-w-sm sm:flex-1">
+            <FiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <Input
+              value={cari ?? ""}
+              onChange={(e) => onCari(e.target.value)}
+              placeholder={petunjukCari}
+              className="h-10 pl-9"
+              aria-label={petunjukCari.replace("…", "")}
+            />
+          </div>
+        )}
         {aksiAtas}
-        <div className="ml-auto flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
-          {onCari && (
-            <div className="relative min-w-0 flex-1 sm:w-64">
-              <FiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-              <Input value={cari ?? ""} onChange={(e) => onCari(e.target.value)} placeholder="Cari…" className="h-9 pl-9" aria-label="Cari" />
-            </div>
-          )}
-          <span className="shrink-0 rounded-md border border-border bg-muted px-3 py-1.5 text-sm tabular-nums text-muted-foreground">
-            {memuat ? "…" : `${(jumlah ?? baris.length).toLocaleString("id-ID")} data`}
+        <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+          <span className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
+            {memuat ? "Memuat…" : `${(jumlah ?? baris.length).toLocaleString("id-ID")} ${satuan}`}
           </span>
+          <Button
+            variant="outline"
+            className="h-10 gap-2 px-3 hover:bg-muted hover:text-foreground"
+            onClick={onMuatUlang}
+            aria-label="Muat ulang"
+          >
+            <FiRefreshCw className={cn("h-4 w-4", memuat && "animate-spin")} aria-hidden />
+            <span className="hidden sm:inline">Muat ulang</span>
+          </Button>
         </div>
       </div>
 
@@ -61,32 +68,31 @@ export function DaftarData({
         <EmptyState judul={kosong.judul} keterangan={kosong.keterangan} aksi={kosong.aksi} />
       ) : (
         <>
-          <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+          <div className="hidden overflow-x-auto rounded-lg border border-border lg:block">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[hsl(var(--kepala-tabel))] text-left text-white">
+                <tr className="bg-muted text-left text-muted-foreground">
                   {kolom.map((k) => (
-                    <th key={k.kunci} scope="col" className={cn("whitespace-nowrap px-3 py-2.5 font-semibold", k.rata === "kanan" && "text-right")}>
+                    <th key={k.kunci} scope="col" className={cn("whitespace-nowrap px-4 py-3 font-semibold", k.rata === "kanan" && "text-right")}>
                       {k.judul}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {baris.map((b, i) => (
+                {baris.map((b) => (
                   <tr
                     key={kunciBaris(b)}
                     tabIndex={onPilih ? 0 : undefined}
                     onClick={onPilih ? () => onPilih(b) : undefined}
                     onKeyDown={onPilih ? (e) => e.key === "Enter" && onPilih(b) : undefined}
                     className={cn(
-                      "border-t border-border/60",
-                      i % 2 === 1 && "bg-muted/40",
-                      onPilih && "cursor-pointer hover:bg-[hsl(var(--accent))] focus-visible:bg-[hsl(var(--accent))] focus-visible:outline-none",
+                      "border-t border-border/70",
+                      onPilih && "cursor-pointer hover:bg-[hsl(var(--accent))]/60 focus-visible:bg-[hsl(var(--accent))]/60 focus-visible:outline-none",
                     )}
                   >
                     {kolom.map((k) => (
-                      <td key={k.kunci} className={cn("px-3 py-2.5 align-top", k.rata === "kanan" && "text-right tabular-nums")}>
+                      <td key={k.kunci} className={cn("px-4 py-3 align-top", k.rata === "kanan" && "text-right tabular-nums")}>
                         {k.render ? k.render(b) : (b[k.kunci] ?? "—")}
                       </td>
                     ))}
@@ -95,7 +101,7 @@ export function DaftarData({
               </tbody>
             </table>
           </div>
-          <ul className="space-y-2 md:hidden">
+          <ul className="space-y-2 lg:hidden">
             {baris.map((b) => (
               <li key={kunciBaris(b)}>
                 <button

@@ -1,5 +1,5 @@
-// Pola Accurate di dalam satu tab menu: tombol daftar (hijau) lalu satu sub-tab
-// per data yang dibuka ("Data baru", atau nama datanya). Sub-tab yang tidak aktif
+// Pola Accurate di dalam satu tab menu: sub-tab "Daftar" lalu satu sub-tab per
+// data yang dibuka ("Pengguna baru", atau nama datanya). Sub-tab yang tidak aktif
 // disembunyikan, bukan dibuang, jadi isian formulirnya tetap ada.
 import { useState } from "react";
 import { FiList, FiPlus, FiX } from "react-icons/fi";
@@ -16,6 +16,12 @@ import {
 import { cn } from "@/shared/lib/cn";
 
 let urutan = 0;
+
+const kapital = (teks) => teks.charAt(0).toUpperCase() + teks.slice(1);
+
+const GAYA_SUBTAB = "-mb-px flex h-10 items-center border-b-2 text-sm transition-colors";
+const SUBTAB_AKTIF = "border-[hsl(var(--primary))] font-semibold text-foreground";
+const SUBTAB_LAIN = "border-transparent text-muted-foreground hover:border-border hover:text-foreground";
 
 export function KerangkaDaftarForm({ namaData, bisaBuat = false, renderDaftar, renderForm }) {
   const [terbuka, setTerbuka] = useState([]); // [{ kunci, id, judul, berubah }]
@@ -41,7 +47,7 @@ export function KerangkaDaftarForm({ namaData, bisaBuat = false, renderDaftar, r
 
   const bukaBaru = () => {
     const kunci = `baru-${++urutan}`;
-    setTerbuka((daftar) => [...daftar, { kunci, id: null, judul: "Data baru", berubah: false }]);
+    setTerbuka((daftar) => [...daftar, { kunci, id: null, judul: `${kapital(namaData)} baru`, berubah: false }]);
     setAktif(kunci);
   };
 
@@ -54,50 +60,39 @@ export function KerangkaDaftarForm({ namaData, bisaBuat = false, renderDaftar, r
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-1.5 border-b border-border">
-        <button
-          type="button"
-          onClick={() => setAktif("daftar")}
-          aria-label={`Daftar ${namaData}`}
-          title={`Daftar ${namaData}`}
-          className={cn(
-            "mb-1.5 flex h-9 w-11 items-center justify-center rounded-md border text-[hsl(var(--jenis-transaksi-isi))] transition-colors",
-            aktif === "daftar"
-              ? "border-[hsl(var(--jenis-transaksi-isi))] bg-[hsl(var(--jenis-transaksi-isi))] text-white"
-              : "border-[hsl(var(--jenis-transaksi-garis))] bg-[hsl(var(--jenis-transaksi))] hover:brightness-95",
-          )}
-        >
-          <FiList className="h-5 w-5" aria-hidden />
-        </button>
-        {terbuka.map((t) => (
-          <div
-            key={t.kunci}
-            className={cn(
-              "flex h-9 max-w-[16rem] items-center rounded-t-md border border-b-0 text-sm",
-              aktif === t.kunci ? "border-border bg-card font-semibold text-foreground" : "border-transparent bg-muted text-muted-foreground hover:text-foreground",
-            )}
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-2 border-b border-border">
+        <div className="flex min-w-0 flex-1 flex-wrap items-end gap-x-3">
+          <button
+            type="button"
+            onClick={() => setAktif("daftar")}
+            className={cn(GAYA_SUBTAB, "gap-1.5 px-1", aktif === "daftar" ? SUBTAB_AKTIF : SUBTAB_LAIN)}
           >
-            <button type="button" onClick={() => setAktif(t.kunci)} className="min-w-0 truncate py-1.5 pl-3 pr-2" title={t.judul}>
-              {t.berubah && <span className="mr-1 text-[hsl(var(--primary))]" aria-label="belum disimpan">•</span>}
-              {t.judul}
-            </button>
-            <button
-              type="button"
-              onClick={() => mintaTutup(t)}
-              aria-label={`Tutup ${t.judul}`}
-              className="mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded hover:bg-muted"
-            >
-              <FiX className="h-3.5 w-3.5" aria-hidden />
-            </button>
-          </div>
-        ))}
+            <FiList className="h-4 w-4" aria-hidden /> Daftar
+          </button>
+          {terbuka.map((t) => (
+            <div key={t.kunci} className={cn(GAYA_SUBTAB, "max-w-[18rem]", aktif === t.kunci ? SUBTAB_AKTIF : SUBTAB_LAIN)}>
+              <button type="button" onClick={() => setAktif(t.kunci)} className="min-w-0 truncate py-1.5 pl-1 pr-1.5" title={t.judul}>
+                {t.berubah && <span className="mr-1 text-[hsl(var(--primary))]" aria-label="belum disimpan">•</span>}
+                {t.judul}
+              </button>
+              <button
+                type="button"
+                onClick={() => mintaTutup(t)}
+                aria-label={`Tutup ${t.judul}`}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <FiX className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            </div>
+          ))}
+        </div>
         {bisaBuat && (
           <button
             type="button"
             onClick={bukaBaru}
-            className="mb-1.5 ml-auto flex h-9 items-center gap-1.5 rounded-md bg-[hsl(var(--primary))] px-3 text-sm font-semibold text-white hover:bg-[hsl(var(--primary))]/90"
+            className="mb-2 flex h-10 items-center gap-1.5 rounded-lg bg-[hsl(var(--primary))] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[hsl(var(--primary))]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2"
           >
-            <FiPlus className="h-4 w-4" aria-hidden /> Data baru
+            <FiPlus className="h-4 w-4" aria-hidden /> Tambah {namaData}
           </button>
         )}
       </div>

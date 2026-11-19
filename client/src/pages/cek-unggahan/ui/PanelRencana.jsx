@@ -221,7 +221,7 @@ export function PanelRencana({ unggahan, dataTersimpan, referensi: ref, bisaUbah
       )}
 
       {bisaUbah && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-3 py-3 shadow-elevated backdrop-blur md:left-16 sm:px-6">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-3 py-3 shadow-elevated backdrop-blur md:left-[var(--lebar-sidebar)] sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{isian.length.toLocaleString("id-ID")} angka</span> akan disimpan

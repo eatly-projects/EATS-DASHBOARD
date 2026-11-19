@@ -7,11 +7,16 @@ import { Button } from "@/shared/ui/button";
 
 function LayarMemuatSesi() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="h-14 border-b border-border bg-card" />
-      <div className="flex">
-        <div className="hidden h-[calc(100vh-3.5rem)] w-16 shrink-0 bg-[hsl(var(--rel))] md:block" />
-        <div className="flex-1 space-y-4 p-6 md:p-8">
+    <div className="min-h-screen bg-background md:flex">
+      <div className="hidden h-screen w-64 shrink-0 space-y-3 border-r border-border bg-card p-4 md:block">
+        <Skeleton className="h-9 w-40" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-9 w-full rounded-lg" />
+        ))}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="h-14 border-b border-border bg-card md:h-12" />
+        <div className="space-y-4 p-6 md:p-8">
           <Skeleton className="h-8 w-64" />
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (

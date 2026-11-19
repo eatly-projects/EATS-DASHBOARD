@@ -1,17 +1,19 @@
-// Kerangka aplikasi ala Accurate: bilah atas, bilah ikon modul di kiri, baris
-// tab menu, lalu isi tab. Di HP bilah ikon diganti laci menu.
+// Kerangka aplikasi: sidebar bertulisan yang bisa dibuka-tutup di kiri, lalu baris
+// tab menu ala Accurate, judul halaman, dan isi tab. Di HP sidebar jadi laci.
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Sheet, SheetContent, SheetTitle } from "@/shared/ui/sheet";
 import { Skeleton } from "@/shared/ui/bits";
+import { cn } from "@/shared/lib/cn";
 import { useSesi } from "@/entities/sesi";
 import { useDaftarUnggahan } from "@/entities/unggahan";
 import { menuDariPath, semuaMenu, useHak, useNavigasi } from "@/entities/navigasi";
 import { KODE_DASHBOARD, useTab } from "../model/useTab";
+import { LEBAR_SIDEBAR, useSidebar } from "../model/useSidebar";
+import { KETERANGAN_MENU } from "../model/ikon";
 import { BilahAtas } from "./BilahAtas";
-import { RelModul } from "./RelModul";
-import { PanelModul } from "./PanelModul";
+import { IsiSidebar } from "./Sidebar";
 import { BarisTab } from "./BarisTab";
 import { IsiTab } from "./IsiTab";
 
@@ -21,6 +23,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const nav = useNavigasi();
   const { tab, buka, saring } = useTab();
+  const { ciut, alihkan } = useSidebar();
   const [laciTerbuka, setLaciTerbuka] = useState(false);
 
   const hakUnggah = useHak("unggah_laporan");
@@ -31,8 +34,8 @@ export function AppShell() {
   const menuPerKode = useMemo(() => new Map(semuaMenu(nav.data).map((m) => [m.kode, m])), [nav.data]);
   const menuAktif = pathname === "/" ? { kode: KODE_DASHBOARD } : nav.data ? menuDariPath(nav.data, pathname) : null;
   const kodeAktif = menuAktif?.kode ?? null;
-  const modulAktif = menuPerKode.get(kodeAktif)?.modul ?? null;
   const namaTab = (kode) => (kode === KODE_DASHBOARD ? "Dashboard" : menuPerKode.get(kode)?.nama ?? "");
+  const judul = namaTab(kodeAktif);
 
   // Alamat browser -> tab. Alamat yang bukan milik menu yang boleh dibuka dialihkan ke Dashboard.
   useEffect(() => {
@@ -52,41 +55,58 @@ export function AppShell() {
   }, [nav.data, saring]);
 
   useEffect(() => {
-    document.title = `${namaTab(kodeAktif) || "EATS Dashboard"} · EATS Dashboard`;
-  });
+    document.title = `${judul || "EATS Dashboard"} · EATS Dashboard`;
+  }, [judul]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [kodeAktif]);
 
+  const propsSidebar = { modul, kodeAktif, jumlahMenunggu, pengguna };
+
   return (
-    <div className="min-h-screen bg-background">
-      <BilahAtas pengguna={pengguna} onBukaLaci={() => setLaciTerbuka(true)} adaMenu={modul.length > 0} />
-      <div className="flex">
-        <RelModul modul={modul} modulAktif={modulAktif} jumlahMenunggu={jumlahMenunggu} />
-        <div className="min-w-0 flex-1">
-          <BarisTab namaTab={namaTab} kodeAktif={kodeAktif} />
-          <main className="mx-auto max-w-[1400px] px-3 py-4 sm:px-5 md:px-6 md:py-6">
-            {nav.isPending ? (
-              <div className="space-y-3">
-                <Skeleton className="h-8 w-56" />
-                <Skeleton className="h-64 w-full rounded-xl" />
-              </div>
-            ) : (
+    // --lebar-sidebar dipakai bilah yang menempel di bawah layar (mis. bilah Setujui) supaya tidak tertutup sidebar.
+    <div
+      className="min-h-screen bg-background md:flex"
+      style={{ "--lebar-sidebar": ciut ? LEBAR_SIDEBAR.tertutup : LEBAR_SIDEBAR.terbuka }}
+    >
+      <aside
+        className={cn(
+          "sticky top-0 z-40 hidden h-screen shrink-0 border-r border-border transition-[width] duration-200 md:block",
+          ciut ? "w-[76px]" : "w-64",
+        )}
+      >
+        <IsiSidebar {...propsSidebar} ciut={ciut} onAlihkan={alihkan} />
+      </aside>
+
+      <div className="min-w-0 flex-1">
+        <BilahAtas pengguna={pengguna} onBukaLaci={() => setLaciTerbuka(true)} adaMenu={modul.length > 0} />
+        <BarisTab namaTab={namaTab} kodeAktif={kodeAktif} />
+        <main className="max-w-[1600px] px-3 py-5 sm:px-5 md:px-6 md:py-6 lg:px-8">
+          {nav.isPending ? (
+            <div className="space-y-3">
+              <Skeleton className="h-8 w-56" />
+              <Skeleton className="h-4 w-80" />
+              <Skeleton className="h-64 w-full rounded-xl" />
+            </div>
+          ) : (
+            <>
+              {judul && (
+                <header className="mb-5">
+                  <h1 className="text-2xl font-bold text-foreground md:text-[28px] md:leading-9">{judul}</h1>
+                  {KETERANGAN_MENU[kodeAktif] && <p className="mt-1 text-sm text-muted-foreground md:text-base">{KETERANGAN_MENU[kodeAktif]}</p>}
+                </header>
+              )}
               <IsiTab tab={tab} kodeAktif={kodeAktif} alamatAktif={pathname + search} />
-            )}
-          </main>
-        </div>
+            </>
+          )}
+        </main>
       </div>
 
       <Sheet open={laciTerbuka} onOpenChange={setLaciTerbuka}>
-        <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto p-4">
+        <SheetContent side="left" className="w-[85vw] max-w-xs border-0 p-0">
           <SheetTitle className="sr-only">Menu</SheetTitle>
-          <div className="space-y-6 pt-6">
-            {modul.map((m) => (
-              <PanelModul key={m.kode} modul={m} onPilih={() => setLaciTerbuka(false)} jumlahMenunggu={jumlahMenunggu} />
-            ))}
-          </div>
+          <IsiSidebar {...propsSidebar} onPilih={() => setLaciTerbuka(false)} />
         </SheetContent>
       </Sheet>
     </div>

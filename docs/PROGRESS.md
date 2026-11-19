@@ -2,7 +2,40 @@
 
 > Catatan kronologis. Yang terbaru di atas.
 
-## 2026-11-19 — Tahap 0 pembukuan ala Accurate: fondasi (digabung ke `main` di laptop, belum di-push)
+## 2026-11-19 — Tampilan baru: sidebar modern yang bisa dibuka-tutup (di-push ke `main`)
+
+Lutfi menilai tampilan Tahap 0 (tiruan Accurate) "jelek banget", dan Lutfi maupun bosnya tidak terbiasa dengan tampilan
+itu. Arah yang disetujui adalah perpaduan Accurate dengan desain modern. Rancangannya ada di
+`docs/superpowers/specs/2026-11-19-tampilan-sidebar-design.md`.
+
+- **Sidebar:**
+  - Putih, nama menu ditulis lengkap, dikelompokkan Laporan, Perusahaan, lalu Pengaturan.
+  - Setiap menu punya kotak ikon kecil berwarna menurut jenisnya, mengikuti pola Accurate.
+  - Bisa ditutup jadi bilah ikon, dan pilihannya diingat.
+  - Di HP sidebar jadi laci.
+- **Tab ala Accurate tetap ada.** Tab aktif ditandai garis merah, dan tombol "N tab ⌄" ada di ujung kanan.
+- **Setiap halaman** punya judul dan satu kalimat keterangan.
+- **Daftar:**
+  - Sub-tab "Daftar" bertulisan dan tombol "Tambah …".
+  - Kepala tabel abu muda, jumlah ditulis dengan satuannya ("5 pengguna"), dan tombol "Muat ulang" bertulisan.
+  - Di HP dan tablet daftar tampil sebagai kartu.
+- **Formulir:** bagiannya disusun bertumpuk, dengan tombol Simpan di kanan (di HP menempel di bawah).
+- **Dihapus:** bilah ikon merah tua, panel kotak menu, dan bilah atas desktop.
+- **Server, data, dan hak akses tidak berubah.**
+
+**Sudah diverifikasi:**
+- Build dan lint bersih.
+- Dicek di browser laptop (dev server lokal, data `finance_uji`):
+  - desktop dengan sidebar terbuka dan tertutup, termasuk keterangan saat ikon ditunjuk;
+  - formulir Pengguna dan Akses Grup;
+  - tablet (820 px) dan HP (390 px) lewat bingkai, termasuk laci menu;
+  - Operator yang hanya diberi hak Dashboard dan Unggah Laporan, yang sidebarnya hanya berisi dua menu itu.
+- Akun dan grup uji yang dibuat untuk pengecekan sudah dihapus lagi.
+
+**Belum diverifikasi:** HP sungguhan dan Vercel. Dashboard berisi angka belum dilihat, karena data uji belum punya
+laporan yang disetujui.
+
+## 2026-11-19 — Tahap 0 pembukuan ala Accurate: fondasi (dirilis ke Vercel)
 
 Rencana kerja: `docs/superpowers/plans/2026-11-19-tahap-0-fondasi.md`.
 
@@ -11,7 +44,7 @@ Rencana kerja: `docs/superpowers/plans/2026-11-19-tahap-0-fondasi.md`.
 - Hak `finance_app` di tabel baru sesuai rencana: Log Aktivitas tidak bisa diubah atau dihapus, dan baris Perusahaan
   tidak bisa ditambah atau dihapus.
 - Tiga akun admin tetap utuh.
-- Kode digabung ke `main` di laptop. **Vercel masih versi lama** sampai `main` di-push.
+- Commit `8f0978e` di-push ke `main`; Vercel sudah deploy (backend menjawab menu baru, berkas frontend sama dengan build yang dites). Masuk dengan akun asli di Vercel belum dicek Claude.
 
 Yang dibangun:
 

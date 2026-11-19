@@ -25,6 +25,8 @@ function DaftarAksesGrup({ buka }) {
       onPilih={(g) => buka(g.id, g.nama)}
       cari={cari}
       onCari={setCari}
+      satuan="akses grup"
+      petunjukCari="Cari nama atau keterangan grup…"
       kosong={
         cari
           ? { judul: "Tidak ada akses grup yang cocok" }

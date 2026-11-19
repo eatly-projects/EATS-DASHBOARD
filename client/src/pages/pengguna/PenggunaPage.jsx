@@ -62,6 +62,8 @@ function DaftarPengguna({ buka }) {
       onPilih={(p) => buka(p.id, p.nama)}
       cari={cari}
       onCari={setCari}
+      satuan="pengguna"
+      petunjukCari="Cari nama atau email…"
       kosong={{ judul: cari ? "Tidak ada akun yang cocok" : "Belum ada akun" }}
       kartuHp={(p) => (
         <>

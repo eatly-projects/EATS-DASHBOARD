@@ -50,7 +50,7 @@ export function DetailLog({ id }) {
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-[hsl(var(--kepala-tabel))] text-left text-white">
+            <tr className="bg-muted text-left text-muted-foreground">
               <th scope="col" className="px-3 py-2.5 font-semibold">
                 Kolom
               </th>

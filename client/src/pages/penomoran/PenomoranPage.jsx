@@ -36,6 +36,8 @@ function DaftarPenomoran({ buka }) {
       onPilih={(p) => buka(p.id, p.nama)}
       cari={cari}
       onCari={setCari}
+      satuan="penomoran"
+      petunjukCari="Cari nama atau jenis transaksi…"
       kosong={{ judul: cari ? "Tidak ada penomoran yang cocok" : "Belum ada penomoran" }}
       kartuHp={(p) => (
         <>

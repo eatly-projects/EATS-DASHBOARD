@@ -94,6 +94,8 @@ function DaftarLog({ buka }) {
       onPilih={(l) => buka(l.id, `${NAMA_TINDAKAN[l.tindakan]} ${l.referensi || l.menu_nama}`)}
       cari={cari}
       onCari={setCari}
+      satuan="catatan"
+      petunjukCari="Cari nama data yang diubah…"
       jumlah={q.data?.pages[0]?.jumlah}
       adaLagi={q.hasNextPage}
       onMuatLagi={() => q.fetchNextPage()}

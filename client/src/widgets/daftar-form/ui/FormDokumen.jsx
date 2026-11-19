@@ -1,5 +1,5 @@
-// Formulir ala Accurate: tab di atas (Umum, Hak Akses, …) dan kolom tombol aksi
-// di kanan (Simpan, Hapus). Di HP semua bagian disusun bertumpuk dan tombol
+// Formulir: bagian-bagiannya (Umum, Hak Akses, …) disusun bertumpuk ke bawah, dan
+// tombol aksi (Simpan, Hapus) ada di kolom kanan seperti Accurate. Di HP tombol
 // aksi pindah ke bilah bawah yang menempel.
 import { useState } from "react";
 import {
@@ -28,47 +28,28 @@ function TombolAksi({ a, onTekan, hp }) {
       onClick={onTekan}
       disabled={a.nonaktif || a.memuat}
       className={cn(
-        "flex items-center justify-center rounded-lg border font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-        hp ? "h-11 flex-1 gap-2 px-3 text-sm" : "h-[72px] w-[88px] flex-col gap-1.5 text-xs",
+        "flex items-center justify-center gap-2 rounded-lg border text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2",
+        hp ? "h-11 flex-1 px-3" : "h-10 w-full px-4",
         GAYA_AKSI[a.nada ?? "biasa"],
       )}
     >
-      {Ikon && <Ikon className={cn(hp ? "h-4 w-4" : "h-5 w-5", a.memuat && "animate-pulse")} aria-hidden />}
+      {Ikon && <Ikon className={cn("h-4 w-4", a.memuat && "animate-pulse")} aria-hidden />}
       <span>{a.memuat ? a.labelMemuat ?? `${a.label}…` : a.label}</span>
     </button>
   );
 }
 
+/** `tab`: bagian formulir [{ kunci, judul, isi }], ditampilkan bertumpuk berurutan. */
 export function FormDokumen({ tab, aksi = [] }) {
-  const [aktif, setAktif] = useState(tab[0]?.kunci);
   const [konfirmasi, setKonfirmasi] = useState(null);
   const tekan = (a) => (a.konfirmasi ? setKonfirmasi(a) : a.onClick());
 
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start gap-5">
       <div className={cn("min-w-0 flex-1 space-y-4", aksi.length && "pb-20 md:pb-0")}>
-        {tab.length > 1 && (
-          <div className="hidden gap-1 border-b border-border md:flex" role="tablist">
-            {tab.map((t) => (
-              <button
-                key={t.kunci}
-                type="button"
-                role="tab"
-                aria-selected={aktif === t.kunci}
-                onClick={() => setAktif(t.kunci)}
-                className={cn(
-                  "-mb-px rounded-t-md border border-b-0 px-4 py-2 text-sm",
-                  aktif === t.kunci ? "border-border bg-card font-semibold text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t.judul}
-              </button>
-            ))}
-          </div>
-        )}
         {tab.map((t) => (
-          <section key={t.kunci} className={cn("rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5", aktif !== t.kunci && "md:hidden")}>
-            {tab.length > 1 && <h3 className="mb-3 text-base font-bold text-foreground md:hidden">{t.judul}</h3>}
+          <section key={t.kunci} aria-label={t.judul} className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-6">
+            {tab.length > 1 && <h3 className="mb-4 text-base font-bold text-foreground md:text-lg">{t.judul}</h3>}
             {t.isi}
           </section>
         ))}
@@ -76,7 +57,7 @@ export function FormDokumen({ tab, aksi = [] }) {
 
       {aksi.length > 0 && (
         <>
-          <aside className="sticky top-32 hidden shrink-0 flex-col gap-2 md:flex" aria-label="Aksi">
+          <aside className="sticky top-16 hidden w-40 shrink-0 flex-col gap-2 md:flex" aria-label="Aksi">
             {aksi.map((a) => (
               <TombolAksi key={a.kunci} a={a} onTekan={() => tekan(a)} />
             ))}

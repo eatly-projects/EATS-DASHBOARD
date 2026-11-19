@@ -12,7 +12,7 @@ import {
 import { cn } from "@/shared/lib/cn";
 import { KODE_DASHBOARD, useTab } from "../model/useTab";
 
-/** Baris tab menu yang terbuka, seperti Accurate. Tab aktif berwarna merek. */
+/** Baris tab menu yang terbuka, seperti Accurate. Tab aktif ditandai garis merah di bawahnya. */
 export function BarisTab({ namaTab, kodeAktif }) {
   const { tab: semuaTab, tutup, tutupSemua } = useTab();
   // Tab yang namanya belum diketahui (navigasi masih dimuat, atau menunya tidak boleh dibuka) tidak ditampilkan.
@@ -31,8 +31,8 @@ export function BarisTab({ namaTab, kodeAktif }) {
   };
 
   return (
-    <div className="sticky top-14 z-30 flex h-11 items-end gap-2 border-b border-border bg-[hsl(var(--muted))] pl-2 pr-2 sm:pl-3">
-      <div ref={barisRef} className="flex min-w-0 flex-1 items-end gap-1 overflow-x-auto [scrollbar-width:none]" role="tablist" aria-label="Tab menu terbuka">
+    <div className="sticky top-14 z-30 flex h-12 items-stretch gap-2 border-b border-border bg-card px-2 sm:px-4 md:top-0 md:px-6">
+      <div ref={barisRef} className="flex min-w-0 flex-1 items-stretch gap-1 overflow-x-auto [scrollbar-width:none]" role="tablist" aria-label="Tab menu terbuka">
         {tab.map((t) => {
           const aktif = t.kode === kodeAktif;
           const nama = namaTab(t.kode);
@@ -41,13 +41,18 @@ export function BarisTab({ namaTab, kodeAktif }) {
               key={t.kode}
               role="presentation"
               className={cn(
-                "flex h-9 shrink-0 items-center rounded-t-lg border border-b-0 text-sm transition-colors",
+                "-mb-px flex shrink-0 items-center border-b-2 text-sm transition-colors",
                 aktif
-                  ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))] font-semibold text-white"
-                  : "border-border bg-card text-foreground hover:bg-[hsl(var(--accent))]",
+                  ? "border-[hsl(var(--primary))] font-semibold text-foreground"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
               )}
             >
-              <Link to={t.path} role="tab" aria-selected={aktif} className="whitespace-nowrap py-1.5 pl-3 pr-3 focus-visible:outline-none">
+              <Link
+                to={t.path}
+                role="tab"
+                aria-selected={aktif}
+                className="whitespace-nowrap rounded-md px-3 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+              >
                 {nama}
               </Link>
               {t.kode !== KODE_DASHBOARD && (
@@ -55,10 +60,7 @@ export function BarisTab({ namaTab, kodeAktif }) {
                   type="button"
                   onClick={() => tutupTab(t.kode)}
                   aria-label={`Tutup tab ${nama}`}
-                  className={cn(
-                    "-ml-1.5 mr-1.5 flex h-6 w-6 items-center justify-center rounded-md",
-                    aktif ? "hover:bg-white/20" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
+                  className="-ml-2 mr-1 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <FiX className="h-3.5 w-3.5" aria-hidden />
                 </button>
@@ -72,10 +74,10 @@ export function BarisTab({ namaTab, kodeAktif }) {
           <button
             type="button"
             aria-label={`Daftar ${tab.length} tab terbuka`}
-            className="mb-1 flex h-8 shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-sm font-semibold text-foreground hover:bg-[hsl(var(--accent))]"
+            className="my-2 flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-sm font-medium text-foreground hover:bg-muted"
           >
-            {tab.length}
-            <FiChevronDown className="h-4 w-4" aria-hidden />
+            {tab.length} tab
+            <FiChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">

@@ -89,7 +89,7 @@ export function MatriksHak({ modul, hak, onUbah }) {
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[hsl(var(--kepala-tabel))] text-white">
+              <tr className="bg-muted text-muted-foreground">
                 <th scope="col" className="px-3 py-2.5 text-left font-semibold">
                   Menu
                 </th>

@@ -15,6 +15,11 @@ import { penggunaRouter } from "./features/pengguna/pengguna.routes.js";
 import { ambilReferensi } from "./features/referensi/referensi.service.js";
 import { unggahanRouter } from "./features/unggahan/unggahan.routes.js";
 import { laporanRouter } from "./features/laporan/laporan.routes.js";
+import { navigasiRouter } from "./features/navigasi/navigasi.routes.js";
+import { aksesGrupRouter } from "./features/akses-grup/akses-grup.routes.js";
+import { penomoranRouter } from "./features/penomoran/penomoran.routes.js";
+import { preferensiRouter } from "./features/preferensi/preferensi.routes.js";
+import { logAktivitasRouter } from "./features/log-aktivitas/log-aktivitas.routes.js";
 
 export function buatAplikasi() {
   const app = express();
@@ -49,6 +54,11 @@ export function buatAplikasi() {
   api.get("/referensi", wajibMasuk, async (_req, res) => kirim(res, await ambilReferensi()));
   api.use("/unggahan", unggahanRouter);
   api.use("/laporan", laporanRouter);
+  api.use("/navigasi", navigasiRouter);
+  api.use("/akses-grup", aksesGrupRouter);
+  api.use("/penomoran", penomoranRouter);
+  api.use("/preferensi", preferensiRouter);
+  api.use("/log-aktivitas", logAktivitasRouter);
 
   app.use("/api", batasApi, api);
   app.get("/", (_req, res) => kirim(res, { nama: "EATS Dashboard API", dokumentasi: "docs/PLANNING.md §6" }));

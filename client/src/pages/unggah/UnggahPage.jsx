@@ -1,5 +1,6 @@
 import { FiCheckCircle, FiCpu, FiEdit3 } from "react-icons/fi";
 import { KotakUnggah } from "@/features/unggah-berkas/ui/KotakUnggah";
+import { useHak } from "@/entities/navigasi";
 import { RiwayatUnggahan } from "./ui/RiwayatUnggahan";
 
 const LANGKAH = [
@@ -9,9 +10,16 @@ const LANGKAH = [
 ];
 
 export function UnggahPage() {
+  const hak = useHak("unggah_laporan");
   return (
     <div className="space-y-6">
-      <KotakUnggah />
+      {hak.buat ? (
+        <KotakUnggah />
+      ) : (
+        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-card">
+          Anda hanya bisa melihat daftar unggahan. Untuk mengunggah berkas, minta Administrator memberi hak Buat di menu Unggah Laporan.
+        </p>
+      )}
       <ol className="grid gap-3 lg:grid-cols-3">
         {LANGKAH.map((l, i) => (
           <li key={l.judul} className="flex gap-3 rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5">

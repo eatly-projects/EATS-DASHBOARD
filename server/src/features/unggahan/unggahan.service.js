@@ -3,6 +3,8 @@
 import crypto from "node:crypto";
 import { dalamTransaksi, kueri } from "../../shared/db/pool.js";
 import { AppError, galat } from "../../shared/http.js";
+import { catatLog } from "../../shared/log/log.js";
+import { bulanTahun } from "../../shared/format.js";
 import { ambilReferensi } from "../referensi/referensi.service.js";
 import { bacaDokumen, petakanExcel } from "./ai.js";
 import { bacaBukuKerja, ringkasanUntukAi } from "./excel.js";
@@ -32,7 +34,8 @@ const KOLOM_RINGKAS = `
   (select max(x ->> 'periode') from jsonb_array_elements(coalesce(u.rencana -> 'nilai', '[]'::jsonb)) x) as periode_akhir`;
 const DARI = `from unggahan u join pengguna pu on pu.id = u.diunggah_oleh left join pengguna pd on pd.id = u.diputuskan_oleh`;
 
-export async function simpanUnggahan({ berkas, pengguna }) {
+export async function simpanUnggahan({ berkas, req }) {
+  const { pengguna } = req;
   if (!berkas?.buffer?.length) throw galat.permintaan("Belum ada berkas yang dipilih.");
   const { jenis, mime } = kenaliBerkas(berkas.buffer, berkas.originalname || "berkas");
   const sidik = crypto.createHash("sha256").update(berkas.buffer).digest("hex");
@@ -50,6 +53,7 @@ export async function simpanUnggahan({ berkas, pengguna }) {
       [nama, jenis, mime, berkas.buffer.length, sidik, pengguna.id],
     );
     await k.query("insert into unggahan_berkas (unggahan_id, isi) values ($1, $2)", [rows[0].id, berkas.buffer]);
+    await catatLog(k, req, { tindakan: "buat", menu: "unggah_laporan", referensi: nama, sesudah: { "Nama berkas": nama, Status: "Diunggah" } });
     return rows[0].id;
   });
   return { unggahan: await ambilRingkas(id), berkas_sama: sama };
@@ -161,7 +165,8 @@ export async function bacaUnggahan(id) {
  * seluruhnya (hapus lalu tulis dalam satu transaksi), jadi unggah ulang tidak
  * pernah membuat data dobel.
  */
-export async function setujuiUnggahan(id, nilaiBaru, pengguna) {
+export async function setujuiUnggahan(id, nilaiBaru, req) {
+  const { pengguna } = req;
   const ref = await ambilReferensi();
   const unitSah = new Set(ref.unit.map((u) => u.kode));
   const posSah = new Set(ref.pos.map((p) => p.kode));
@@ -175,7 +180,7 @@ export async function setujuiUnggahan(id, nilaiBaru, pengguna) {
   }
 
   return dalamTransaksi(async (k) => {
-    const { rows } = await k.query("select status, rencana from unggahan where id = $1::uuid for update", [id]).catch(tangkapUuid);
+    const { rows } = await k.query("select status, rencana, nama_berkas from unggahan where id = $1::uuid for update", [id]).catch(tangkapUuid);
     const u = rows[0];
     if (!u) throw galat.tidakAda("Unggahan tidak ditemukan.");
     if (u.status !== "menunggu_cek") throw galat.bentrok("Unggahan ini tidak sedang menunggu dicek (mungkin sudah disetujui atau dibatalkan).");
@@ -244,21 +249,48 @@ export async function setujuiUnggahan(id, nilaiBaru, pengguna) {
       `update unggahan set status = 'disetujui', diputuskan_oleh = $2, diputuskan_at = now(), ringkasan_simpan = $3 where id = $1`,
       [id, pengguna.id, JSON.stringify(ringkasan)],
     );
+    await catatLog(k, req, {
+      tindakan: "ubah",
+      menu: "unggah_laporan",
+      referensi: u.nama_berkas,
+      sebelum: { Status: "Menunggu dicek" },
+      sesudah: {
+        Status: "Disetujui",
+        "Bulan yang disimpan": ringkasan.periode.map((p) => bulanTahun(p)).join(", ") || "—",
+        "Jumlah angka yang disimpan": String(ringkasan.ditulis),
+      },
+    });
     const { nilai_lama: _abaikan, ...tanpaLama } = ringkasan;
     return tanpaLama;
   });
 }
 
-export async function batalkanUnggahan(id, pengguna) {
-  const { rowCount } = await kueri(
-    `update unggahan set status = 'dibatalkan', diputuskan_oleh = $2, diputuskan_at = now()
-      where id = $1::uuid and status in ('diunggah', 'menunggu_cek', 'gagal_dibaca')`,
-    [id, pengguna.id],
-  ).catch(tangkapUuid);
-  if (!rowCount) {
-    await ambilRingkas(id); // 404 kalau memang tidak ada
-    throw galat.bentrok("Unggahan ini sudah diputuskan, jadi tidak bisa dibatalkan.");
-  }
+const NAMA_STATUS = { diunggah: "Diunggah", menunggu_cek: "Menunggu dicek", gagal_dibaca: "Gagal dibaca" };
+
+export async function batalkanUnggahan(id, req) {
+  await dalamTransaksi(async (k) => {
+    const { rows } = await k.query(
+      `update unggahan u set status = 'dibatalkan', diputuskan_oleh = $2, diputuskan_at = now()
+         from unggahan lama
+        where u.id = $1::uuid and lama.id = u.id and u.status in ('diunggah', 'menunggu_cek', 'gagal_dibaca')
+        returning u.nama_berkas, lama.status as status_lama`,
+      [id, req.pengguna.id],
+    ).catch(tangkapUuid);
+    if (!rows[0]) {
+      // Dicek lewat klien transaksi yang sama: di Vercel kolam sambungan hanya 1, jadi
+      // meminta sambungan kedua di sini akan menunggu sampai habis waktu.
+      const { rowCount } = await k.query("select 1 from unggahan where id = $1::uuid", [id]).catch(tangkapUuid);
+      if (!rowCount) throw galat.tidakAda("Unggahan tidak ditemukan.");
+      throw galat.bentrok("Unggahan ini sudah diputuskan, jadi tidak bisa dibatalkan.");
+    }
+    await catatLog(k, req, {
+      tindakan: "ubah",
+      menu: "unggah_laporan",
+      referensi: rows[0].nama_berkas,
+      sebelum: { Status: NAMA_STATUS[rows[0].status_lama] ?? rows[0].status_lama },
+      sesudah: { Status: "Dibatalkan" },
+    });
+  });
   return ambilLengkap(id);
 }
 

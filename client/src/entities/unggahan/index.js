@@ -41,8 +41,9 @@ export function periksaBerkas(berkas) {
   return null;
 }
 
-export function useDaftarUnggahan() {
-  return useQuery({ queryKey: ["unggahan"], queryFn: () => apiGet("/unggahan") });
+/** aktif = false: tidak mengambil data (mis. pengguna tidak punya hak Lihat di menu Unggah Laporan). */
+export function useDaftarUnggahan({ aktif = true } = {}) {
+  return useQuery({ queryKey: ["unggahan"], queryFn: () => apiGet("/unggahan"), enabled: aktif });
 }
 
 export function useUnggahan(id) {

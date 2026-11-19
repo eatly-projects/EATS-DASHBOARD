@@ -14,6 +14,7 @@ import {
   useUnggahan,
 } from "@/entities/unggahan";
 import { StatusUnggahan } from "@/entities/unggahan/ui/StatusUnggahan";
+import { useHak } from "@/entities/navigasi";
 import { PanelRencana } from "./ui/PanelRencana";
 
 function KepalaUnggahan({ u }) {
@@ -74,6 +75,7 @@ function PanelBelumDibaca({ u }) {
   const navigate = useNavigate();
   const baca = useBacaUnggahan();
   const batalkan = useBatalkanUnggahan(u.id);
+  const hak = useHak("unggah_laporan");
   const gagal = u.status === "gagal_dibaca";
   return (
     <div className="rounded-xl border border-border/60 bg-card p-5 shadow-card">
@@ -90,17 +92,21 @@ function PanelBelumDibaca({ u }) {
             <p className="mt-2 text-sm text-muted-foreground">AI sedang membaca berkas… biasanya 20–60 detik. Jangan tutup halaman ini.</p>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
+            {hak.buat && (
             <Button onClick={() => baca.mutate(u.id)} disabled={baca.isPending}>
               <FiRefreshCw className={baca.isPending ? "animate-spin" : ""} aria-hidden /> {gagal ? "Coba baca lagi" : "Baca dengan AI"}
             </Button>
+            )}
+            {hak.hapus && (
             <Button
               variant="outline"
               className="hover:bg-muted hover:text-foreground"
               disabled={batalkan.isPending || baca.isPending}
-              onClick={() => batalkan.mutate(undefined, { onSuccess: () => navigate("/unggah") })}
+              onClick={() => batalkan.mutate(undefined, { onSuccess: () => navigate("/laporan/unggah") })}
             >
               <FiX aria-hidden /> Batalkan
             </Button>
+            )}
           </div>
         </div>
       </div>
@@ -111,6 +117,7 @@ function PanelBelumDibaca({ u }) {
 export function CekUnggahanPage() {
   const { id } = useParams();
   const q = useUnggahan(id);
+  const hak = useHak("unggah_laporan");
   const { ref, isPending: refMemuat, isError: refGalat, error: galatRef } = useReferensi();
 
   if (q.isPending || refMemuat) {
@@ -129,7 +136,7 @@ export function CekUnggahanPage() {
         pesan={(q.error ?? galatRef)?.message}
         aksi={
           <Button variant="outline" asChild className="hover:bg-muted hover:text-foreground">
-            <Link to="/unggah">Kembali ke daftar unggahan</Link>
+            <Link to="/laporan/unggah">Kembali ke daftar unggahan</Link>
           </Button>
         }
       />
@@ -138,12 +145,13 @@ export function CekUnggahanPage() {
 
   const u = q.data?.unggahan ?? q.data;
   const dataTersimpan = q.data?.data_tersimpan ?? [];
-  const bisaUbah = u.status === "menunggu_cek";
+  // Menyetujui butuh hak Ubah di menu Unggah Laporan.
+  const bisaUbah = u.status === "menunggu_cek" && hak.ubah;
   const sudahDiputuskan = u.status === "disetujui" || u.status === "dibatalkan";
 
   return (
     <div className="space-y-6">
-      <Link to="/unggah" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+      <Link to="/laporan/unggah" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <FiArrowLeft className="h-4 w-4" aria-hidden /> Kembali ke unggah laporan
       </Link>
 

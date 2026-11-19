@@ -73,6 +73,28 @@
     --shadow-card: 0 1px 2px hsl(20 14% 11% / 0.04), 0 1px 3px hsl(20 14% 11% / 0.05);
     --shadow-elevated: 0 4px 10px hsl(20 14% 11% / 0.06), 0 16px 40px hsl(20 14% 11% / 0.10);
     --shadow-gold: 0 6px 18px hsl(0 66% 46% / 0.28);
+
+    /* Kerangka ala Accurate (Tahap 0, 2026-11-19).
+     * Bilah ikon kiri: merah cabai gelap (Accurate memakai biru tua). */
+    --rel: 0 45% 20%;
+    --rel-foreground: 0 0% 100%;
+    --rel-hover: 0 40% 28%;
+    /* Kepala tabel daftar data */
+    --kepala-tabel: 20 10% 32%;
+    /* Warna kotak menu menurut jenisnya, mengikuti arti warna di Accurate:
+     * biru data induk, hijau transaksi, oranye pengaturan, ungu laporan. */
+    --jenis-data-induk: 210 85% 94%;
+    --jenis-data-induk-isi: 212 70% 38%;
+    --jenis-data-induk-garis: 212 60% 80%;
+    --jenis-transaksi: 130 55% 92%;
+    --jenis-transaksi-isi: 135 55% 28%;
+    --jenis-transaksi-garis: 135 40% 75%;
+    --jenis-pengaturan: 30 95% 92%;
+    --jenis-pengaturan-isi: 25 85% 38%;
+    --jenis-pengaturan-garis: 28 70% 75%;
+    --jenis-laporan: 270 70% 95%;
+    --jenis-laporan-isi: 272 50% 42%;
+    --jenis-laporan-garis: 272 40% 82%;
   }
 
 }

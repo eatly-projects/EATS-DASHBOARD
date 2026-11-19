@@ -43,7 +43,7 @@ export async function wajibMasuk(req, res, next) {
   } catch {
     return next(galat.belumMasuk("Sesi Anda sudah berakhir. Silakan masuk lagi."));
   }
-  const { rows } = await kueri("select id, email, nama, peran, aktif from pengguna where id = $1", [isi.sub]);
+  const { rows } = await kueri("select id, email, nama, peran, aktif, akses_grup_id from pengguna where id = $1", [isi.sub]);
   const pengguna = rows[0];
   if (!pengguna) return next(galat.belumMasuk());
   if (!pengguna.aktif) return next(new AppError(403, "AKUN_NONAKTIF", "Akun Anda sudah dinonaktifkan. Hubungi admin."));
@@ -53,6 +53,6 @@ export async function wajibMasuk(req, res, next) {
 }
 
 export function hanyaAdmin(req, _res, next) {
-  if (req.pengguna?.peran !== "admin") return next(galat.dilarang("Hanya admin yang boleh mengelola pengguna."));
+  if (req.pengguna?.peran !== "admin") return next(galat.dilarang("Menu Pengaturan hanya untuk Administrator."));
   next();
 }

@@ -29,7 +29,8 @@ if (!URL_MIGRASI) throw new Error("MIGRASI_DATABASE_URL belum diisi.");
 
 const alamat = new URL(URL_MIGRASI);
 const [peran, kodeProject = "?"] = decodeURIComponent(alamat.username).split(".");
-const SKEMA_LAIN = ["public", "pos", "operation_v2", "marketing"];
+// Schema EATS yang lain ikut dipotret: memigrasi finance_uji tidak boleh menyentuh finance, dan sebaliknya.
+const SKEMA_LAIN = ["public", "pos", "operation_v2", "marketing", "finance", "finance_uji"].filter((s) => s !== SKEMA);
 
 const berkas = fs.readdirSync(FOLDER).filter((f) => /^\d{3}_[a-z0-9_]+\.sql$/.test(f)).sort();
 

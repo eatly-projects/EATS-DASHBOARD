@@ -2,13 +2,14 @@ import { Router } from "express";
 import { kueri } from "../../shared/db/pool.js";
 import { galat, kirim } from "../../shared/http.js";
 import { wajibMasuk } from "../../shared/middleware/auth.js";
+import { wajibHak } from "../../shared/akses/hak.js";
 import { ambilReferensi } from "../referensi/referensi.service.js";
 import { gabungPos, hitungUkuran } from "./hitung.js";
 
 export const laporanRouter = Router();
 laporanRouter.use(wajibMasuk);
 
-laporanRouter.get("/", async (req, res) => {
+laporanRouter.get("/", wajibHak("ringkasan_laba_rugi", "lihat"), async (req, res) => {
   const { rows: daftarTahun } = await kueri(
     "select distinct extract(year from periode)::int as tahun from nilai_laporan order by 1 desc",
   );

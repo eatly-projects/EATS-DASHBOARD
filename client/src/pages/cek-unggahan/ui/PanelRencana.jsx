@@ -19,6 +19,7 @@ import { CardBox } from "@/shared/ui/bits";
 import { rentangBulan } from "@/shared/lib/format";
 import { labelUnit } from "@/entities/referensi";
 import { useBatalkanUnggahan, useSetujuiUnggahan } from "@/entities/unggahan";
+import { useHak } from "@/entities/navigasi";
 import { usePilihanLaporan } from "@/features/pilihan-laporan/model/usePilihanLaporan";
 import { cekSilangLangsung, pecahKunci, petaDariRencana, petaLama, strukturUnit } from "../lib/rencana";
 import { PanelCekSilang } from "./PanelCekSilang";
@@ -38,6 +39,7 @@ export function PanelRencana({ unggahan, dataTersimpan, referensi: ref, bisaUbah
 
   const setujui = useSetujuiUnggahan(unggahan.id);
   const batalkan = useBatalkanUnggahan(unggahan.id);
+  const hak = useHak("unggah_laporan");
   const aturPeriode = usePilihanLaporan((s) => s.aturPeriode);
   const aturTahun = usePilihanLaporan((s) => s.aturTahun);
 
@@ -97,7 +99,7 @@ export function PanelRencana({ unggahan, dataTersimpan, referensi: ref, bisaUbah
 
   const batal = () => {
     batalkan.mutate(undefined, {
-      onSuccess: () => navigate("/unggah"),
+      onSuccess: () => navigate("/laporan/unggah"),
       onSettled: () => setKonfirmasi(null),
     });
   };
@@ -219,7 +221,7 @@ export function PanelRencana({ unggahan, dataTersimpan, referensi: ref, bisaUbah
       )}
 
       {bisaUbah && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-3 py-3 shadow-elevated backdrop-blur md:left-64 sm:px-6">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-3 py-3 shadow-elevated backdrop-blur md:left-16 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{isian.length.toLocaleString("id-ID")} angka</span> akan disimpan
@@ -228,14 +230,16 @@ export function PanelRencana({ unggahan, dataTersimpan, referensi: ref, bisaUbah
               {jumlahTidakCocok > 0 && <span className="text-destructive"> · {jumlahTidakCocok} total tidak cocok</span>}
             </p>
             <div className="flex w-full gap-2 sm:w-auto">
-              <Button
-                variant="outline"
-                className="flex-1 hover:bg-muted hover:text-foreground sm:flex-none"
-                onClick={() => setKonfirmasi("batal")}
-                disabled={setujui.isPending || batalkan.isPending}
-              >
-                <FiX aria-hidden /> Batalkan
-              </Button>
+              {hak.hapus && (
+                <Button
+                  variant="outline"
+                  className="flex-1 hover:bg-muted hover:text-foreground sm:flex-none"
+                  onClick={() => setKonfirmasi("batal")}
+                  disabled={setujui.isPending || batalkan.isPending}
+                >
+                  <FiX aria-hidden /> Batalkan
+                </Button>
+              )}
               <Button
                 className="flex-1 sm:flex-none"
                 onClick={() => setKonfirmasi("simpan")}

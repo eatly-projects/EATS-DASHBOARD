@@ -6,6 +6,7 @@ import { FiFileText, FiUploadCloud } from "react-icons/fi";
 import { Info } from "lucide-react";
 import { useReferensi, KODE_GABUNGAN, labelUnit } from "@/entities/referensi";
 import { useLaporan } from "@/entities/laporan";
+import { useHak } from "@/entities/navigasi";
 import { usePilihanLaporan } from "@/features/pilihan-laporan/model/usePilihanLaporan";
 import { PemilihLaporan } from "@/features/pilihan-laporan/ui/PemilihLaporan";
 import { ChartSkeleton, EmptyState, ErrorState, StatSkeleton, TableSkeleton, Skeleton } from "@/shared/ui/bits";
@@ -62,7 +63,7 @@ function AsalData({ asal, unitKode, periode, unitPerKode, gabunganUnitAda, semua
             {perUnggahan.size > 1 || unitKode === KODE_GABUNGAN ? ` (${a.unit.join(" dan ")})` : ""} dari{" "}
           </span>
           {a.unggahan_id ? (
-            <Link to={`/unggahan/${a.unggahan_id}`} className="font-medium text-foreground underline-offset-2 hover:underline">
+            <Link to={`/laporan/unggah/${a.unggahan_id}`} className="font-medium text-foreground underline-offset-2 hover:underline">
               {a.nama_berkas ?? "berkas unggahan"}
             </Link>
           ) : (
@@ -91,6 +92,7 @@ export function RingkasanPage() {
   const { ref, isPending: refMemuat, isError: refGalat, error: galatRef, refetch: muatUlangRef } = useReferensi();
   const pilihan = usePilihanLaporan();
   const laporan = useLaporan(pilihan.tahun);
+  const bisaUnggah = useHak("unggah_laporan").buat;
   const L = laporan.data;
 
   const periodeList = useMemo(() => [...new Set((L?.periode ?? []).map(normalPeriode))].sort(), [L]);
@@ -120,11 +122,13 @@ export function RingkasanPage() {
         judul="Belum ada laporan yang disetujui"
         keterangan="Unggah laporan keuangan (Excel, PDF, atau foto). Setelah AI membacanya dan Anda menyetujuinya, angkanya tampil di sini."
         aksi={
-          <Button asChild>
-            <Link to="/unggah">
-              <FiUploadCloud aria-hidden /> Unggah laporan pertama
-            </Link>
-          </Button>
+          bisaUnggah && (
+            <Button asChild>
+              <Link to="/laporan/unggah">
+                <FiUploadCloud aria-hidden /> Unggah laporan pertama
+              </Link>
+            </Button>
+          )
         }
       />
     );

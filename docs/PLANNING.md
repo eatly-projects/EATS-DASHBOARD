@@ -5,6 +5,10 @@
 >
 > Disusun 2026-11-05. Bagian bertanda **(keputusan Lutfi)** berasal dari Lutfi; sisanya
 > **(keputusan Claude)** dan boleh diubah.
+>
+> **Pembukuan ala Accurate (disetujui Lutfi 2026-11-19, mulai dipakai 1 Januari 2027):** lihat `docs/RENCANA-AKUNTANSI.md`.
+> Tahap 0 (fondasi) selesai dibangun dan digabung ke `main` (migrasi `finance` terpasang; Vercel menunggu push). Rincian kerjanya:
+> `docs/superpowers/plans/2026-11-19-tahap-0-fondasi.md`.
 
 ---
 

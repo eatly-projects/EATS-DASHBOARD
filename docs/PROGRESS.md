@@ -2,6 +2,109 @@
 
 > Catatan kronologis. Yang terbaru di atas.
 
+## 2026-11-19 — Tahap 0 pembukuan ala Accurate: fondasi (digabung ke `main` di laptop, belum di-push)
+
+Rencana kerja: `docs/superpowers/plans/2026-11-19-tahap-0-fondasi.md`.
+
+- **Migrasi `003_fondasi_akuntansi.sql` sudah terpasang di schema production `finance`.** Schema lain tidak berubah.
+- Hasil `npm run uji:isolasi` ke `finance`: semua lulus.
+- Hak `finance_app` di tabel baru sesuai rencana: Log Aktivitas tidak bisa diubah atau dihapus, dan baris Perusahaan
+  tidak bisa ditambah atau dihapus.
+- Tiga akun admin tetap utuh.
+- Kode digabung ke `main` di laptop. **Vercel masih versi lama** sampai `main` di-push.
+
+Yang dibangun:
+
+- **Kerangka tampilan ala Accurate.**
+  - Bilah ikon modul (merah cabai gelap) dengan panel kotak menu berwarna: biru data induk, hijau transaksi,
+    oranye pengaturan, ungu laporan.
+  - Setiap menu jadi tab dengan tombol tutup. Tab tetap hidup saat tidak dibuka, jadi isiannya tidak hilang, dan
+    tab yang sama terbuka lagi setelah halaman dimuat ulang.
+  - Di HP, menu dibuka lewat laci.
+  - Sidebar lama yang bisa dibuka-tutup diganti bilah ikon ini.
+- **Pola daftar lalu formulir:**
+  - Daftar: chip filter, cari, jumlah data, dan tabel berkepala gelap.
+  - Formulir: tab Umum dan lainnya, serta tombol Simpan dan Hapus di kanan. Di HP isinya bertumpuk dan tombolnya
+    pindah ke bawah.
+- **Pengaturan (khusus Administrator):**
+  - **Preferensi:** data perusahaan, awal periode akuntansi (1 Januari 2027), dan kunci transaksi.
+  - **Akses Grup:** hak Lihat/Buat/Ubah/Hapus per menu untuk Operator.
+  - **Pengguna:** level Administrator atau Operator, plus akses grup.
+  - **Penomoran:** nomor otomatis, misalnya JU.2027.01.00001. Nomor tidak kembar walau disimpan bersamaan, dan
+    susunannya terkunci setelah dipakai.
+- **Perusahaan, Log Aktivitas:**
+  - Setiap perubahan tercatat: siapa, kapan, alamat IP, serta isi sebelum dan sesudah.
+  - Catatan tidak bisa diubah atau dihapus aplikasi.
+  - Filter tanggal ditulis eksplisit, misalnya "13–19 Nov 2026".
+- **Hak akses di menu lama:** Ringkasan dan Unggah Laporan sekarang dicek per hak. Alamat lama (`/unggah`,
+  `/unggahan/…`, `/pengguna`) dialihkan otomatis.
+- **Schema uji `finance_uji`** di database bos. Tes otomatis dan dev server laptop memakai schema ini;
+  `.env` laptop sudah `DB_SCHEMA=finance_uji`, sedangkan Vercel tetap `finance`. Tiga akun admin disalin ke sana.
+- **Penyetuju Transaksi dipindah ke Tahap 1**, karena butuh transaksi untuk disetujui.
+
+**Sudah diverifikasi:**
+- 55 tes server lulus: hak akses, nomor paralel, kunci periode, log tidak bisa dihapus, tes hanya jalan di
+  `finance_uji`, dan Vercel dengan satu sambungan database.
+- Build dan lint client bersih.
+- Dicek di browser laptop Lutfi, port 5178 dengan data uji: semua halaman baru; Operator tanpa grup dan Operator
+  dengan grup; tampilan HP (390 px) dan tablet (820 px) lewat bingkai, karena jendela browser tidak bisa diubah
+  ukurannya.
+- Alur lama penuh (unggah Excel contoh, AI membaca, setujui, Dashboard) tetap jalan dan tercatat di log.
+
+**Belum diverifikasi:** HP sungguhan dan Vercel.
+
+**Diperbaiki setelah review:**
+1. Mencabut akses grup Operator tidak berpengaruh.
+2. Membatalkan unggahan menggantung di Vercel.
+3. Tes keamanan bisa mengarahkan sambungan ke `finance`.
+4. Menu gagal dimuat tampil sebagai "belum punya akses".
+5. Toast galat palsu setelah menghapus grup.
+6. Bilah Setujui bergeser.
+
+Masing-masing punya tes yang gagal dulu, lalu lulus.
+
+**Syarat wajib Tahap 1** (tertulis di `RENCANA-AKUNTANSI.md` §8):
+- Nomor dokumen tidak boleh kembar antar-penomoran.
+- `pastikanTanggalTerbuka` memakai `for share`.
+
+**Kekurangan kecil yang ditunda** (belum dikerjakan kecuali Lutfi minta):
+- Penomoran:
+  - Kunci susunan nomor bisa terlewat kalau dua orang menyimpan bersamaan.
+  - Pesan bentrok selalu "nama sudah dipakai", walau yang bentrok penomoran bawaan.
+- Akses Grup:
+  - `Promise.all` pada satu sambungan transaksi memberi peringatan `pg` dan akan rusak di `pg` 9.
+  - Menghapus grup bersamaan dengan menambah anggotanya berakhir galat 500.
+- Unggah Laporan:
+  - Tombol Batalkan di kotak unggah tidak cek hak Hapus (berakhir toast 403).
+  - Operator dengan hak Hapus tanpa Ubah tidak bisa membatalkan unggahan yang menunggu dicek.
+  - Tab Unggah yang tersembunyi bisa memindahkan layar saat AI selesai membaca.
+- Tab menu: menutup tab atau "Tutup semua" membuang formulir yang belum disimpan tanpa konfirmasi.
+- Log Aktivitas: daftarnya tidak segar sendiri setelah perubahan lain; perlu tombol muat ulang.
+- Tes: penjaga schema dicek per tes, belum per berkas.
+- Preferensi: `PUT /preferensi` mengosongkan kolom yang tidak dikirim (halaman selalu mengirim semua).
+- Ringkasan: tautan berkas sumber tampil untuk pengguna tanpa hak Unggah.
+- Database:
+  - Pool production belum punya batas waktu query di sisi klien.
+  - Saran (perlu izin): `ALTER ROLE finance_app SET idle_in_transaction_session_timeout = '60s'` dan
+    `statement_timeout = '25s'`, supaya sambungan yang menggantung tidak mengunci data selamanya.
+
+## 2026-11-11 — Unggahan Bu Inge dihapus
+
+Permintaan Lutfi. Bu Inge mengunggah dan menyetujui `Rekap_PT-EATS_2026_DUMMY.xlsx` (447 angka, Januari–Oktober
+2026, PT EATS dan Boomboo). Dihapus dalam satu transaksi: 447 angka laporan dan 1 unggahan beserta berkasnya.
+Tiga akun admin dan pengaturan (46 pos laporan, 2 unit usaha) tetap. Terbukti di database: angka dan unggahan 0.
+
+## 2026-11-11 — Semua data dikosongkan lagi, 3 akun admin baru
+
+Permintaan Lutfi: kosongkan benar-benar semua data, lalu buat akun admin untuk Lutfi, Martin, dan Inge.
+Dihapus dalam satu transaksi: 447 angka laporan, 1 unggahan (Excel dummy) beserta berkasnya, dan 2 akun lama
+(`boomboo.eatly@gmail.com` dan `martin@eats.com` yang nonaktif). Pengaturan (46 pos laporan, 2 unit usaha) tetap,
+karena tanpa itu aplikasi tidak bisa membaca laporan. Akun baru, semuanya admin: `lutfi@boomboo.id`,
+`martin@boomboo.id`, `inge@boomboo.id`. Kata sandinya di berkas `env-akun` di akar project (masuk `.gitignore`).
+Terbukti di database: tiga akun aktif dan kata sandinya cocok dengan hash. Belum dicoba masuk lewat Vercel.
+Catatan: kata sandi Inge 7 karakter, lebih pendek dari aturan halaman Pengguna (minimal 8). Masuk tetap bisa;
+kalau kata sandinya diganti lewat halaman Pengguna, yang baru harus minimal 8 karakter.
+
 ## 2026-11-06 — Sidebar bisa dibuka-tutup
 
 Permintaan Lutfi. Di laptop, tombol ☰ di kiri judul halaman menciutkan sidebar jadi bilah ikon selebar 76 px.

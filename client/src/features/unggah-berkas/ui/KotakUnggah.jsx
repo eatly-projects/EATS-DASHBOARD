@@ -106,7 +106,7 @@ export function KotakUnggah() {
 
   const selesaiBaca = (id, u) => {
     if (u?.status === "menunggu_cek") {
-      navigate(`/unggahan/${id}`);
+      navigate(`/laporan/unggah/${id}`);
       return;
     }
     const pesan = u?.pesan_gagal || "AI tidak berhasil membaca berkas ini.";
@@ -204,7 +204,7 @@ export function KotakUnggah() {
             <ul className="mt-1 space-y-0.5 text-muted-foreground">
               {berkasSama.map((b) => (
                 <li key={b.id}>
-                  <Link to={`/unggahan/${b.id}`} className="underline-offset-2 hover:underline">
+                  <Link to={`/laporan/unggah/${b.id}`} className="underline-offset-2 hover:underline">
                     {b.nama_berkas}
                   </Link>{" "}
                   · {tanggalJam(b.diunggah_at)} · {STATUS[b.status]?.label ?? b.status}
@@ -283,7 +283,7 @@ export function KotakUnggah() {
                 </Button>
                 {idAktif && (
                   <Button variant="ghost" asChild className="hover:bg-muted hover:text-foreground">
-                    <Link to={`/unggahan/${idAktif}`}>Lihat detail</Link>
+                    <Link to={`/laporan/unggah/${idAktif}`}>Lihat detail</Link>
                   </Button>
                 )}
               </div>

@@ -3,6 +3,7 @@ import multer from "multer";
 import { z } from "zod";
 import { bacaBody, kirim } from "../../shared/http.js";
 import { wajibMasuk } from "../../shared/middleware/auth.js";
+import { wajibHak } from "../../shared/akses/hak.js";
 import {
   BATAS_UKURAN,
   ambilBerkas,
@@ -20,18 +21,25 @@ unggahanRouter.use(wajibMasuk);
 
 const terima = multer({ storage: multer.memoryStorage(), limits: { fileSize: BATAS_UKURAN, files: 1 } });
 
-unggahanRouter.get("/", async (_req, res) => kirim(res, await daftarUnggahan()));
+// Hak per aksi (menu Unggah Laporan): lihat = daftar, detail, unduh;
+// buat = unggah & minta AI membaca; ubah = menyetujui; hapus = membatalkan.
+const lihat = wajibHak("unggah_laporan", "lihat");
+const buat = wajibHak("unggah_laporan", "buat");
+const ubah = wajibHak("unggah_laporan", "ubah");
+const hapus = wajibHak("unggah_laporan", "hapus");
 
-unggahanRouter.post("/", terima.single("berkas"), async (req, res) => {
-  kirim(res, await simpanUnggahan({ berkas: req.file, pengguna: req.pengguna }), 201);
+unggahanRouter.get("/", lihat, async (_req, res) => kirim(res, await daftarUnggahan()));
+
+unggahanRouter.post("/", buat, terima.single("berkas"), async (req, res) => {
+  kirim(res, await simpanUnggahan({ berkas: req.file, req }), 201);
 });
 
-unggahanRouter.get("/:id", async (req, res) => {
+unggahanRouter.get("/:id", lihat, async (req, res) => {
   const unggahan = await ambilLengkap(req.params.id);
   kirim(res, { unggahan, data_tersimpan: await dataTersimpanUntuk(unggahan.rencana) });
 });
 
-unggahanRouter.get("/:id/berkas", async (req, res) => {
+unggahanRouter.get("/:id/berkas", lihat, async (req, res) => {
   const b = await ambilBerkas(req.params.id);
   res.setHeader("Content-Type", b.mime);
   res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(b.nama_berkas)}`);
@@ -39,7 +47,7 @@ unggahanRouter.get("/:id/berkas", async (req, res) => {
   res.send(b.isi);
 });
 
-unggahanRouter.post("/:id/baca", async (req, res) => kirim(res, await bacaUnggahan(req.params.id)));
+unggahanRouter.post("/:id/baca", buat, async (req, res) => kirim(res, await bacaUnggahan(req.params.id)));
 
 const skemaSetujui = z.object({
   nilai: z
@@ -54,10 +62,10 @@ const skemaSetujui = z.object({
     .max(20000, "Terlalu banyak angka dalam satu unggahan."),
 });
 
-unggahanRouter.post("/:id/setujui", async (req, res) => {
+unggahanRouter.post("/:id/setujui", ubah, async (req, res) => {
   const { nilai } = bacaBody(skemaSetujui, req.body);
-  const ringkasan = await setujuiUnggahan(req.params.id, nilai, req.pengguna);
+  const ringkasan = await setujuiUnggahan(req.params.id, nilai, req);
   kirim(res, { unggahan: await ambilLengkap(req.params.id), ringkasan });
 });
 
-unggahanRouter.post("/:id/batalkan", async (req, res) => kirim(res, await batalkanUnggahan(req.params.id, req.pengguna)));
+unggahanRouter.post("/:id/batalkan", hapus, async (req, res) => kirim(res, await batalkanUnggahan(req.params.id, req)));

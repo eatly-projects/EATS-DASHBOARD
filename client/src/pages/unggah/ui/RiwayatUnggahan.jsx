@@ -21,7 +21,7 @@ function TombolAksi({ u }) {
   const cek = u.status === "menunggu_cek";
   return (
     <Button size="sm" variant={cek ? "default" : "outline"} asChild className={cek ? "" : "hover:bg-muted hover:text-foreground"}>
-      <Link to={`/unggahan/${u.id}`}>{cek ? "Cek sekarang" : "Lihat"}</Link>
+      <Link to={`/laporan/unggah/${u.id}`}>{cek ? "Cek sekarang" : "Lihat"}</Link>
     </Button>
   );
 }

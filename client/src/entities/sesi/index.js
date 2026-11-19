@@ -54,4 +54,4 @@ export function useKeluar() {
   });
 }
 
-export const NAMA_PERAN = { admin: "Admin", staf: "Staf" };
+export const NAMA_PERAN = { admin: "Administrator", staf: "Operator" };

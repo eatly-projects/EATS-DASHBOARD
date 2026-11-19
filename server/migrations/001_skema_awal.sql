@@ -17,8 +17,15 @@
 -- dihitung dari pos rinci, supaya tidak pernah ada dua versi angka yang sama.
 -- ============================================================================
 
-comment on schema finance is
-  'EATS Dashboard — dashboard keuangan PT EATS. Dibuat 2026-11-05. Hanya diakses backend lewat peran finance_app; tidak dipakai Data API.';
+do $$
+begin
+  execute format(
+    'comment on schema %I is %L',
+    current_schema(),
+    'EATS Dashboard — dashboard keuangan PT EATS. Dibuat 2026-11-05. Hanya diakses backend lewat peran finance_app; tidak dipakai Data API.'
+      || case when current_schema() = 'finance_uji' then ' Salinan susunan untuk pengujian dan pengembangan lokal.' else '' end
+  );
+end $$;
 
 -- ── Pengguna ────────────────────────────────────────────────────────────────
 create table pengguna (
@@ -169,15 +176,17 @@ create index nilai_laporan_unggahan on nilai_laporan (unggahan_id);
 -- ── Hak akses ───────────────────────────────────────────────────────────────
 -- Tidak ada yang boleh lewat Data API / kunci publik Supabase. Hak untuk peran
 -- aplikasi (finance_app) diberikan oleh scripts/buat-peran-aplikasi.js.
+-- Nama schema diambil dari current_schema() (diatur jalankan.js), supaya berkas
+-- yang sama bisa dipasang ke `finance` maupun `finance_uji`.
 do $$
 declare r text;
 begin
   foreach r in array array['anon', 'authenticated', 'service_role'] loop
     if exists (select 1 from pg_roles where rolname = r) then
-      execute format('revoke all on schema finance from %I', r);
-      execute format('revoke all on all tables in schema finance from %I', r);
-      execute format('revoke all on all sequences in schema finance from %I', r);
+      execute format('revoke all on schema %I from %I', current_schema(), r);
+      execute format('revoke all on all tables in schema %I from %I', current_schema(), r);
+      execute format('revoke all on all sequences in schema %I from %I', current_schema(), r);
     end if;
   end loop;
+  execute format('revoke all on schema %I from public', current_schema());
 end $$;
-revoke all on schema finance from public;

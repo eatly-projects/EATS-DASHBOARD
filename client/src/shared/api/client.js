@@ -50,3 +50,5 @@ api.interceptors.response.use(
 export const apiGet = async (url, params) => (await api.get(url, { params })).data.data;
 export const apiPost = async (url, body, config) => (await api.post(url, body, config)).data.data;
 export const apiPatch = async (url, body) => (await api.patch(url, body)).data.data;
+export const apiPut = async (url, body) => (await api.put(url, body)).data.data;
+export const apiDelete = async (url) => (await api.delete(url)).data.data;

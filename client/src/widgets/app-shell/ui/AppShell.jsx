@@ -1,105 +1,94 @@
-import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { FiMenu } from "react-icons/fi";
+// Kerangka aplikasi ala Accurate: bilah atas, bilah ikon modul di kiri, baris
+// tab menu, lalu isi tab. Di HP bilah ikon diganti laci menu.
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { Sheet, SheetContent, SheetTitle } from "@/shared/ui/sheet";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import { cn } from "@/shared/lib/cn";
+import { Skeleton } from "@/shared/ui/bits";
 import { useSesi } from "@/entities/sesi";
 import { useDaftarUnggahan } from "@/entities/unggahan";
-import { IsiSidebar, Merek } from "./IsiSidebar";
-import { judulHalaman } from "../model/navigasi";
-import { useSidebar } from "../model/useSidebar";
-
-const hariIni = () =>
-  new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+import { menuDariPath, semuaMenu, useHak, useNavigasi } from "@/entities/navigasi";
+import { KODE_DASHBOARD, useTab } from "../model/useTab";
+import { BilahAtas } from "./BilahAtas";
+import { RelModul } from "./RelModul";
+import { PanelModul } from "./PanelModul";
+import { BarisTab } from "./BarisTab";
+import { IsiTab } from "./IsiTab";
 
 export function AppShell() {
   const { data: pengguna } = useSesi();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const navigate = useNavigate();
+  const nav = useNavigasi();
+  const { tab, buka, saring } = useTab();
   const [laciTerbuka, setLaciTerbuka] = useState(false);
-  const { ciut, alihkan } = useSidebar();
-  const daftar = useDaftarUnggahan();
-  const jumlahMenunggu = (daftar.data ?? []).filter((u) => u.status === "menunggu_cek").length;
-  const { judul, sub } = judulHalaman(pathname);
-  const namaDepan = String(pengguna?.nama ?? "").trim().split(/\s+/)[0];
+
+  const hakUnggah = useHak("unggah_laporan");
+  const daftarUnggahan = useDaftarUnggahan({ aktif: hakUnggah.lihat });
+  const jumlahMenunggu = (daftarUnggahan.data ?? []).filter((u) => u.status === "menunggu_cek").length;
+
+  const modul = nav.data?.modul ?? [];
+  const menuPerKode = useMemo(() => new Map(semuaMenu(nav.data).map((m) => [m.kode, m])), [nav.data]);
+  const menuAktif = pathname === "/" ? { kode: KODE_DASHBOARD } : nav.data ? menuDariPath(nav.data, pathname) : null;
+  const kodeAktif = menuAktif?.kode ?? null;
+  const modulAktif = menuPerKode.get(kodeAktif)?.modul ?? null;
+  const namaTab = (kode) => (kode === KODE_DASHBOARD ? "Dashboard" : menuPerKode.get(kode)?.nama ?? "");
+
+  // Alamat browser -> tab. Alamat yang bukan milik menu yang boleh dibuka dialihkan ke Dashboard.
+  useEffect(() => {
+    if (!nav.data) return;
+    const menu = pathname === "/" ? { kode: KODE_DASHBOARD } : menuDariPath(nav.data, pathname);
+    if (menu) {
+      buka(menu.kode, pathname + search);
+    } else {
+      toast.error("Halaman tidak ditemukan, atau Anda belum punya akses ke menu itu.", { id: "alamat-tidak-dikenal" });
+      navigate("/", { replace: true });
+    }
+  }, [nav.data, pathname, search, buka, navigate]);
+
+  // Hak dicabut atau ganti akun: tab yang tidak lagi boleh dibuka ikut tertutup.
+  useEffect(() => {
+    if (nav.data) saring(new Set(semuaMenu(nav.data).map((m) => m.kode)));
+  }, [nav.data, saring]);
 
   useEffect(() => {
-    document.title = `${judul} · EATS Dashboard`;
-  }, [judul]);
+    document.title = `${namaTab(kodeAktif) || "EATS Dashboard"} · EATS Dashboard`;
+  });
 
-  // Pindah halaman selalu mulai dari atas (mis. setelah "Benar, simpan" ke Ringkasan).
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [pathname]);
+  }, [kodeAktif]);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar desktop: menempel setinggi layar, tidak ikut memanjang (pelajaran PLD).
-          Bisa diciutkan jadi bilah ikon lewat tombol di kiri judul halaman. */}
-      <aside
-        className={cn(
-          "sticky top-0 hidden h-screen shrink-0 self-start overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none md:block",
-          ciut ? "w-[76px]" : "w-64",
-        )}
-      >
-        <IsiSidebar pengguna={pengguna} jumlahMenunggu={jumlahMenunggu} ciut={ciut} />
-      </aside>
-
-      {/* Bilah atas HP */}
-      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-2 border-b border-border bg-card/95 px-2 backdrop-blur md:hidden">
-        <button
-          type="button"
-          onClick={() => setLaciTerbuka(true)}
-          className="relative flex h-10 w-10 items-center justify-center rounded-xl text-foreground hover:bg-muted"
-          aria-label="Buka menu"
-        >
-          <FiMenu className="h-5 w-5" />
-          {jumlahMenunggu > 0 && <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-[hsl(var(--primary))] ring-2 ring-card" aria-hidden />}
-        </button>
-        <Merek kecil />
+    <div className="min-h-screen bg-background">
+      <BilahAtas pengguna={pengguna} onBukaLaci={() => setLaciTerbuka(true)} adaMenu={modul.length > 0} />
+      <div className="flex">
+        <RelModul modul={modul} modulAktif={modulAktif} jumlahMenunggu={jumlahMenunggu} />
+        <div className="min-w-0 flex-1">
+          <BarisTab namaTab={namaTab} kodeAktif={kodeAktif} />
+          <main className="mx-auto max-w-[1400px] px-3 py-4 sm:px-5 md:px-6 md:py-6">
+            {nav.isPending ? (
+              <div className="space-y-3">
+                <Skeleton className="h-8 w-56" />
+                <Skeleton className="h-64 w-full rounded-xl" />
+              </div>
+            ) : (
+              <IsiTab tab={tab} kodeAktif={kodeAktif} alamatAktif={pathname + search} />
+            )}
+          </main>
+        </div>
       </div>
+
       <Sheet open={laciTerbuka} onOpenChange={setLaciTerbuka}>
-        <SheetContent side="left" className="w-[85vw] max-w-xs border-0 p-0">
+        <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto p-4">
           <SheetTitle className="sr-only">Menu</SheetTitle>
-          <IsiSidebar pengguna={pengguna} jumlahMenunggu={jumlahMenunggu} onPilih={() => setLaciTerbuka(false)} />
+          <div className="space-y-6 pt-6">
+            {modul.map((m) => (
+              <PanelModul key={m.kode} modul={m} onPilih={() => setLaciTerbuka(false)} jumlahMenunggu={jumlahMenunggu} />
+            ))}
+          </div>
         </SheetContent>
       </Sheet>
-
-      <main className="min-w-0 flex-1 pt-14 md:pt-0">
-        <header className="border-b border-border bg-card px-4 py-5 sm:px-6 md:px-8 md:py-6">
-          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-            <div className="flex min-w-0 items-start gap-3">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={alihkan}
-                    aria-label={ciut ? "Buka menu samping" : "Tutup menu samping"}
-                    aria-expanded={!ciut}
-                    className="mt-0.5 hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-muted md:flex"
-                  >
-                    <FiMenu className="h-5 w-5" aria-hidden />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{ciut ? "Buka menu samping" : "Tutup menu samping"}</TooltipContent>
-              </Tooltip>
-              <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-foreground md:text-[28px] md:leading-9">{judul}</h1>
-              {sub && <p className="mt-1 text-sm text-muted-foreground md:text-[15px]">{sub}</p>}
-              </div>
-            </div>
-            {pengguna && (
-              <div className="hidden text-right lg:block">
-                <p className="text-sm font-semibold text-foreground">Halo, {namaDepan || pengguna.nama}</p>
-                <p className="text-xs text-muted-foreground">{hariIni()}</p>
-              </div>
-            )}
-          </div>
-        </header>
-        <div className="mx-auto max-w-[1400px] px-3 py-5 sm:px-6 md:px-8 md:py-8">
-          <Outlet />
-        </div>
-      </main>
     </div>
   );
 }

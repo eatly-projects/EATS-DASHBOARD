@@ -21,18 +21,41 @@ export const MODUL = [
       { kode: "akses_grup", nama: "Akses Grup", jenis: "pengaturan", path: "/pengaturan/akses-grup" },
       { kode: "pengguna", nama: "Pengguna", jenis: "pengaturan", path: "/pengaturan/pengguna" },
       { kode: "penomoran", nama: "Penomoran", jenis: "pengaturan", path: "/pengaturan/penomoran" },
+      { kode: "penyetuju_transaksi", nama: "Penyetuju Transaksi", jenis: "pengaturan", path: "/pengaturan/penyetuju-transaksi" },
     ],
   },
   {
     kode: "perusahaan",
     nama: "Perusahaan",
-    menu: [{ kode: "log_aktivitas", nama: "Log Aktivitas", jenis: "laporan", path: "/perusahaan/log-aktivitas", aksi: ["lihat"] }],
+    menu: [
+      { kode: "departemen", nama: "Departemen", jenis: "data_induk", path: "/perusahaan/departemen" },
+      {
+        kode: "persetujuan",
+        nama: "Persetujuan",
+        jenis: "laporan",
+        path: "/perusahaan/persetujuan",
+        aksi: ["lihat"],
+        keteranganAksi: { lihat: "Melihat transaksi yang menunggu persetujuan. Yang bisa menyetujui hanya penyetuju di Pengaturan" },
+      },
+      { kode: "log_aktivitas", nama: "Log Aktivitas", jenis: "laporan", path: "/perusahaan/log-aktivitas", aksi: ["lihat"] },
+    ],
+  },
+  {
+    kode: "buku_besar",
+    nama: "Buku Besar",
+    menu: [
+      { kode: "akun_perkiraan", nama: "Akun Perkiraan", jenis: "data_induk", path: "/buku-besar/akun" },
+      { kode: "jurnal_umum", nama: "Jurnal Umum", jenis: "transaksi", path: "/buku-besar/jurnal-umum" },
+      { kode: "pencatatan_beban", nama: "Pencatatan Beban", jenis: "transaksi", path: "/buku-besar/pencatatan-beban" },
+      { kode: "histori_akun", nama: "Histori Akun", jenis: "laporan", path: "/buku-besar/histori-akun", aksi: ["lihat"] },
+    ],
   },
   {
     kode: "laporan",
     nama: "Laporan",
     menu: [
       { kode: "ringkasan_laba_rugi", nama: "Ringkasan Laba Rugi", jenis: "laporan", path: "/", aksi: ["lihat"] },
+      { kode: "laporan_keuangan", nama: "Laporan Keuangan", jenis: "laporan", path: "/laporan/keuangan", aksi: ["lihat"] },
       {
         kode: "unggah_laporan",
         nama: "Unggah Laporan",

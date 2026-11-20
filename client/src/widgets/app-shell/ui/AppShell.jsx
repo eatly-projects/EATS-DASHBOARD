@@ -8,6 +8,7 @@ import { Skeleton } from "@/shared/ui/bits";
 import { cn } from "@/shared/lib/cn";
 import { useSesi } from "@/entities/sesi";
 import { useDaftarUnggahan } from "@/entities/unggahan";
+import { useJumlahPersetujuan } from "@/entities/persetujuan";
 import { menuDariPath, semuaMenu, useHak, useNavigasi } from "@/entities/navigasi";
 import { KODE_DASHBOARD, useTab } from "../model/useTab";
 import { LEBAR_SIDEBAR, useSidebar } from "../model/useSidebar";
@@ -62,7 +63,9 @@ export function AppShell() {
     window.scrollTo(0, 0);
   }, [kodeAktif]);
 
-  const propsSidebar = { modul, kodeAktif, jumlahMenunggu, pengguna };
+  const hakPersetujuan = useHak("persetujuan");
+  const jumlahPersetujuan = useJumlahPersetujuan(hakPersetujuan.lihat).data?.menunggu_saya ?? 0;
+  const propsSidebar = { modul, kodeAktif, pengguna, lencana: { unggah_laporan: jumlahMenunggu, persetujuan: jumlahPersetujuan } };
 
   return (
     // --lebar-sidebar dipakai bilah yang menempel di bawah layar (mis. bilah Setujui) supaya tidak tertutup sidebar.
@@ -72,7 +75,7 @@ export function AppShell() {
     >
       <aside
         className={cn(
-          "sticky top-0 z-40 hidden h-screen shrink-0 border-r border-border transition-[width] duration-200 md:block",
+          "sticky top-0 z-40 hidden h-screen shrink-0 border-r border-border transition-[width] duration-200 md:block print:hidden",
           ciut ? "w-[76px]" : "w-64",
         )}
       >
@@ -92,7 +95,7 @@ export function AppShell() {
           ) : (
             <>
               {judul && (
-                <header className="mb-5">
+                <header className="mb-5 print:hidden">
                   <h1 className="text-2xl font-bold text-foreground md:text-[28px] md:leading-9">{judul}</h1>
                   {KETERANGAN_MENU[kodeAktif] && <p className="mt-1 text-sm text-muted-foreground md:text-base">{KETERANGAN_MENU[kodeAktif]}</p>}
                 </header>

@@ -50,7 +50,7 @@ function DenganKeterangan({ tampil, teks, children }) {
 }
 
 function ItemMenu({ menu, nama, Ikon, kotak, aktif, ciut, lencana, onPilih }) {
-  const teks = lencana ? `${nama} (${lencana} menunggu dicek)` : nama;
+  const teks = lencana ? `${nama} (${lencana} menunggu)` : nama;
   return (
     <li>
       <DenganKeterangan tampil={ciut} teks={teks}>
@@ -77,7 +77,7 @@ function ItemMenu({ menu, nama, Ikon, kotak, aktif, ciut, lencana, onPilih }) {
           {!ciut && lencana > 0 && (
             <span
               className="min-w-6 shrink-0 rounded-full bg-[hsl(var(--primary))] px-2 py-0.5 text-center text-xs font-bold text-white"
-              title={`${lencana} unggahan menunggu dicek`}
+              title={`${lencana} menunggu`}
             >
               {lencana}
             </span>
@@ -94,7 +94,7 @@ function ItemMenu({ menu, nama, Ikon, kotak, aktif, ciut, lencana, onPilih }) {
  * - `onAlihkan`: tombol buka/tutup; tidak ada di laci HP.
  * - `onPilih`: dipanggil setelah menu diklik (menutup laci HP).
  */
-export function IsiSidebar({ modul, kodeAktif, jumlahMenunggu = 0, pengguna, ciut = false, onAlihkan, onPilih }) {
+export function IsiSidebar({ modul, kodeAktif, lencana = {}, pengguna, ciut = false, onAlihkan, onPilih }) {
   const keluar = useKeluar();
   const navigate = useNavigate();
   const { data: perusahaan } = usePreferensi();
@@ -167,7 +167,7 @@ export function IsiSidebar({ modul, kodeAktif, jumlahMenunggu = 0, pengguna, ciu
                   kotak={KOTAK_JENIS[menu.jenis]}
                   aktif={kodeAktif === menu.kode}
                   ciut={ciut}
-                  lencana={menu.kode === "unggah_laporan" ? jumlahMenunggu : 0}
+                  lencana={lencana[menu.kode] ?? 0}
                   onPilih={onPilih}
                 />
               ))}

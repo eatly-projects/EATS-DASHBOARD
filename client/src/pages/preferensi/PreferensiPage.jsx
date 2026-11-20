@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BULAN_PANJANG, tanggal } from "@/shared/lib/format";
 import { FormDokumen } from "@/widgets/daftar-form/ui/FormDokumen";
 import { usePreferensi, useSimpanPreferensi } from "@/entities/preferensi";
+import { PilihAkun } from "@/features/pilih-akun/ui/PilihAkun";
 
 function Kolom({ label, htmlFor, petunjuk, galat, children, className }) {
   return (
@@ -150,6 +151,36 @@ export function PreferensiPage() {
                       : "Tidak dikunci. Pakai kunci setelah laporan satu bulan selesai diperiksa."}
                 </p>
               </fieldset>
+            </div>
+          ),
+        },
+        {
+          kunci: "akun",
+          judul: "Akun Perkiraan",
+          isi: (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Kolom
+                label="Ekuitas Saldo Awal"
+                htmlFor="pref-ekuitas"
+                petunjuk="Lawan otomatis setiap saldo awal akun. Tidak bisa diganti setelah ada saldo awal."
+              >
+                <PilihAkun
+                  id="pref-ekuitas"
+                  tipe={["modal"]}
+                  value={isian.akun_ekuitas_saldo_awal_id}
+                  label={isian.akun_ekuitas_saldo_awal_nama}
+                  onChange={(a) => ubah({ akun_ekuitas_saldo_awal_id: a.id, akun_ekuitas_saldo_awal_nama: `${a.kode} ${a.nama}` })}
+                />
+              </Kolom>
+              <Kolom label="Laba Ditahan" htmlFor="pref-laba" petunjuk="Laba tahun-tahun sebelumnya ditampilkan di akun ini pada Neraca.">
+                <PilihAkun
+                  id="pref-laba"
+                  tipe={["modal"]}
+                  value={isian.akun_laba_ditahan_id}
+                  label={isian.akun_laba_ditahan_nama}
+                  onChange={(a) => ubah({ akun_laba_ditahan_id: a.id, akun_laba_ditahan_nama: `${a.kode} ${a.nama}` })}
+                />
+              </Kolom>
             </div>
           ),
         },

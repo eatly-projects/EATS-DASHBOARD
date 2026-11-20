@@ -1,7 +1,7 @@
 # EATS Dashboard: Rencana Pembukuan ala Accurate
 
 > Disusun 2026-11-17, diperbarui 2026-11-19 (sumber data). **Status: disetujui Lutfi 2026-11-19.** Tahap 0 selesai
-> dibangun 2026-11-19 (migrasi `finance` terpasang, digabung ke `main`; Vercel menunggu push); tahap berikutnya: Tahap 1.
+> dibangun dan dirilis 2026-11-19. Tahap 1 (Buku Besar) dibangun 2026-11-19 dan dirilis 2026-11-20; rincian: `docs/superpowers/plans/2026-11-19-tahap-1-buku-besar.md`.
 > Tanda: **(keputusan Lutfi)** dari Lutfi, **(usulan Claude)** boleh diubah, **(perlu keputusan)** ditanyakan.
 
 ## 1. Tujuan
@@ -144,6 +144,12 @@ di-push hanya dengan izin Lutfi.
 | 4 | ~~Satu PT dengan 4 lini bisnis?~~ | **Terjawab 2026-11-19: ya.** Satu pembukuan dengan 4 departemen |
 | 5 | ~~Mulai dipakai sungguhan kapan?~~ | **Terjawab 2026-11-19: 1 Januari 2027, dipakai utuh.** Saldo awal diambil dari Neraca Accurate per 31 Desember 2026. Langganan Accurate dipertahankan 1–2 bulan sesudahnya hanya untuk dibaca dan dibandingkan, tanpa input |
 | 6 | ~~Contoh layar Accurate untuk ditiru~~ | **Terjawab 2026-11-19:** memakai gambar dari halaman bantuan resmi help.accurate.id. Ringkasannya ada di rencana kerja Tahap 0, bagian "Acuan tampilan". Usulan awal: | Lutfi atau finance mengirim tangkapan layar Accurate yang sering dipakai: menu, dashboard, satu faktur, satu daftar, satu laporan. Kalau tidak ada akses, Lutfi mendaftar uji coba gratis 30 hari sendiri, lalu Claude melihatnya lewat browser Lutfi yang sudah masuk |
+
+| 7 | ~~Nama perusahaan "PT Enak Aplikasi Tirta Sejahtera" benar?~~ | **Terjawab 2026-11-19: benar** |
+| 8 | ~~Operator dengan hak Log Aktivitas boleh melihat semua catatan, termasuk perubahan akun?~~ | **Terjawab 2026-11-19: boleh**, sama seperti Accurate |
+| 9 | ~~Daftar akun dari mana, sementara finance cuti?~~ | **Arahan Lutfi 2026-11-19: "seperti Accurate".** Dipakai akun bawaan Accurate, dan finance bisa menambah atau mengubahnya. Saldo awal per 31 Desember 2026 tetap diambil dari Neraca Accurate |
+| 10 | ~~Daftar Persetujuan terlihat oleh semua yang punya hak menu itu?~~ | **Terjawab 2026-11-20: boleh.** Yang bisa menyetujui atau menolak tetap hanya penyetujunya |
+| 11 | ~~Penyetuju boleh menyetujui transaksi buatannya sendiri?~~ | **Terjawab 2026-11-20: boleh.** Alasan Lutfi: saat bos sibuk, finance yang mengatur semuanya. Dikunci oleh tes "penyetuju boleh menyetujui transaksi yang ia ajukan sendiri" |
 
 Keputusan yang bisa menunggu sampai tahapnya tiba:
 - metode HPP (usulan: rata-rata, seperti bawaan Accurate);

@@ -2,6 +2,99 @@
 
 > Catatan kronologis. Yang terbaru di atas.
 
+## 2026-11-20 — Tahap 1: Buku Besar dan laporan inti (di-push ke `main`)
+
+Arahan Lutfi: "lanjut kerjakan, ingat ya seperti accurate". Rencana kerja ada di
+`docs/superpowers/plans/2026-11-19-tahap-1-buku-besar.md`, termasuk ringkasan perilaku Accurate dari help.accurate.id.
+Lutfi menyetujui semuanya 2026-11-20, termasuk rancangan database.
+
+**Migrasi `004_buku_besar.sql` terpasang di `finance_uji` dan `finance` (2026-11-20).**
+- Schema lain tidak berubah.
+- Isi di `finance`: 73 akun (16 induk), 4 departemen, 0 jurnal. Ekuitas Saldo Awal 300001, Laba Ditahan 300002.
+- `finance_app` bisa membaca, menambah, mengubah, dan menghapus di 6 tabel baru. `uji:isolasi` lulus.
+
+- **Akun Perkiraan:**
+  - 16 tipe akun dengan nama persis Accurate.
+  - Akun bertingkat (Sub Akun dari); saldo induk adalah jumlah anaknya.
+  - Akun bawaan berpola kode Accurate (73 akun), boleh diubah finance.
+  - Akun yang sudah dipakai terkunci tipenya dan tidak bisa dihapus.
+- **Saldo awal:** diisi di formulir akun dan otomatis menjadi jurnal "Saldo Awal akun X" per 31 Desember 2026, melawan
+  Ekuitas Saldo Awal. Akun lawan ini dan Laba Ditahan diatur di Preferensi.
+- **Jurnal Umum:**
+  - Tanggal, nomor otomatis, keterangan; rincian Akun, Debit, Kredit, Departemen, Catatan.
+  - Debit harus sama dengan kredit, dan database ikut menolak jurnal yang tidak seimbang.
+  - Nomor tidak kembar walau disimpan bersamaan.
+- **Pencatatan Beban:** akrual seperti Accurate. Beban dicatat sebagai Hutang Beban; dibayar nanti lewat Kas & Bank
+  (Tahap 2).
+- **Departemen** berisi 4 lini bisnis (Maklon, Retail, HORECA, Modern Trade).
+- **Penyetuju Transaksi (Pengaturan) dan Persetujuan (Perusahaan):**
+  - Aturan per tipe transaksi dengan nilai minimal dan penyetuju.
+  - Transaksi yang kena aturan menunggu tanpa nomor dan belum masuk laporan.
+  - Penyetuju menyetujui atau menolak dengan alasan, dan ada lencana jumlah yang menunggu di sidebar.
+  - Keputusan Lutfi 2026-11-20:
+    - Daftar Persetujuan terlihat oleh semua yang punya hak menu itu.
+    - Penyetuju boleh menyetujui transaksi buatannya sendiri, karena saat bos sibuk finance yang mengatur semuanya.
+      Aturan ini dikunci dengan tes.
+- **Laporan Keuangan:**
+  - Laba/Rugi, Laba/Rugi per Lini Bisnis, Neraca (dengan Laba Ditahan dan Laba Tahun Ini), Neraca Percobaan, Rincian
+    Buku Besar, Keseluruhan Jurnal.
+  - Bisa diunduh Excel dan dicetak atau disimpan PDF.
+- **Histori Akun:** satu akun, satu rentang, dengan saldo berjalan.
+- Semua perubahan tercatat di Log Aktivitas.
+
+**Sudah diverifikasi:**
+- 112 tes server lulus, termasuk:
+  - jurnal seimbang dan hitungan sen tepat;
+  - kunci periode;
+  - nomor tidak kembar saat disimpan bersamaan;
+  - persetujuan;
+  - Neraca seimbang, termasuk perpindahan laba antar-tahun.
+- Tes uang di client lulus, build dan lint bersih.
+- Dicek di browser laptop (data uji), lalu datanya dihapus lagi:
+  - saldo awal bank;
+  - Jurnal Umum lewat layar;
+  - Pencatatan Beban;
+  - Laba/Rugi per Lini Bisnis Januari 2027;
+  - Neraca seimbang;
+  - unduh Excel;
+  - persetujuan lewat layar;
+  - Histori Akun;
+  - tampilan HP dan tablet.
+
+**Sebelum rilis (2026-11-20):** 118 tes server lulus, tes uang di client lulus, lint dan build bersih.
+
+**Belum diverifikasi:** HP sungguhan, dan pemakaian langsung di Vercel oleh Lutfi.
+
+**Review independen:**
+- Tidak ada temuan kritis.
+- Diperbaiki, masing-masing dengan tes yang gagal dulu lalu lulus (total 117 tes):
+  1. Akun pendapatan dan beban sekarang mulai dari nol setiap 1 Januari di Neraca Percobaan dan Histori Akun. Laba
+     tahun lalu masuk Laba Ditahan.
+  2. Periode tidak bisa dikunci selama masih ada transaksi yang menunggu persetujuan di dalamnya.
+  3. Penyetuju wajib punya hak Lihat di menu Persetujuan.
+
+**Kekurangan kecil yang ditunda (Tahap 1):**
+- Akun bisa dijadikan induk tepat saat jurnal memakainya. Sangat jarang terjadi.
+- Neraca bisa sesaat menampilkan peringatan "tidak seimbang" palsu kalau ada jurnal tersimpan tepat saat dihitung.
+- Jurnal saldo awal di periode terkunci ditulis ulang saat kode atau nama akun diganti. Nilainya tetap.
+- Pemilih akun di formulir transaksi memperlihatkan saldo semua akun.
+- Pita "Menunggu persetujuan" menyebut "belum punya nomor", padahal transaksi yang diubah ulang tetap bernomor.
+- Histori Akun tidak bisa memilih akun nonaktif.
+- Tes memakan nomor urut penomoran bawaan di data uji.
+- Daftar Akun Perkiraan menampilkan saldo pendapatan dan beban sepanjang masa, bukan tahun berjalan. Laporannya sudah
+  benar.
+
+**Ditunda** (alasan di rencana kerja, Keputusan Claude):
+- Dari Accurate:
+  - lampiran berkas, impor Excel, Hapus Massal;
+  - Proyek;
+  - Pelanggan/Pemasok di baris jurnal;
+  - mata uang asing;
+  - persetujuan "minimal dua" atau "semua harus setuju";
+  - subtotal akun induk di laporan.
+- Widget Dashboard dan sambungan Ringkasan lama ke jurnal. Keduanya butuh finance memasangkan akun ke 46 pos dan lini
+  bisnis ke unit usaha.
+
 ## 2026-11-19 — Tampilan baru: sidebar modern yang bisa dibuka-tutup (di-push ke `main`)
 
 Lutfi menilai tampilan Tahap 0 (tiruan Accurate) "jelek banget", dan Lutfi maupun bosnya tidak terbiasa dengan tampilan

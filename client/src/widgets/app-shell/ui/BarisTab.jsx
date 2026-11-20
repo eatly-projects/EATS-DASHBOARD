@@ -31,7 +31,7 @@ export function BarisTab({ namaTab, kodeAktif }) {
   };
 
   return (
-    <div className="sticky top-14 z-30 flex h-12 items-stretch gap-2 border-b border-border bg-card px-2 sm:px-4 md:top-0 md:px-6">
+    <div className="sticky top-14 z-30 flex h-12 items-stretch gap-2 border-b border-border bg-card px-2 sm:px-4 md:top-0 md:px-6 print:hidden">
       <div ref={barisRef} className="flex min-w-0 flex-1 items-stretch gap-1 overflow-x-auto [scrollbar-width:none]" role="tablist" aria-label="Tab menu terbuka">
         {tab.map((t) => {
           const aktif = t.kode === kodeAktif;

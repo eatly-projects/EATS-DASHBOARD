@@ -80,3 +80,13 @@ test("pratinjau memberi contoh, atau pesan galat tanpa menggagalkan permintaan",
   assert.equal(buruk.status, 200);
   assert.match(buruk.body.data.galat, /Tahun dan Bulan/);
 });
+
+test("nomor yang sudah dipakai dokumen lain dilompati (dua penomoran bersusunan sama)", async () => {
+  const kembar = await api("POST", "/penomoran", { ...DATA_UJI, nama: "UJI Kembar" });
+  assert.equal(kembar.status, 201, JSON.stringify(kembar.body));
+  const terpakai = new Set(["JU.2027.05.00001", "JU.2027.05.00002"]);
+  const n = await dalamTransaksi((k) =>
+    ambilNomorBerikut(k, "jurnal_umum", "2027-05-10", kembar.body.data.id, { dipakai: async (x) => terpakai.has(x) }),
+  );
+  assert.equal(n, "JU.2027.05.00003");
+});

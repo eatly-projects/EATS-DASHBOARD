@@ -194,3 +194,28 @@
     background-color: hsl(48 100% 96%);
   }
 }
+
+/* Cetak / Simpan PDF: kertas A4, latar putih, hanya isi halaman (sidebar, tab, dan
+   tombol disembunyikan lewat kelas print:hidden). */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  body {
+    background: #fff !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  table {
+    min-width: 0 !important;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  .sticky {
+    position: static !important;
+  }
+}

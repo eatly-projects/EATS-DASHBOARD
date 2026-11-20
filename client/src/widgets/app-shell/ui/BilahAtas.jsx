@@ -22,7 +22,7 @@ export function BilahAtas({ pengguna, onBukaLaci, adaMenu }) {
   const tekanKeluar = () => keluar.mutate(undefined, { onSettled: () => navigate("/masuk", { replace: true }) });
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b border-border bg-card px-2 md:hidden">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b border-border bg-card px-2 md:hidden print:hidden">
       {adaMenu && (
         <button
           type="button"

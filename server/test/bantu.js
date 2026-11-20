@@ -40,6 +40,21 @@ export async function buatPenggunaUji({ peran = "staf", aksesGrupId = null } = {
  */
 export async function bersihkanDataUji() {
   await pastikanSkemaUji();
+  // Buku Besar (Tahap 1): jurnal dulu (barisnya ikut terhapus), lalu akun anak → induk, lalu departemen.
+  const akunUji = "select id from akun where kode like 'UJI%'";
+  await kueri(
+    `delete from jurnal
+      where dibuat_oleh in (select id from pengguna where email like $1)
+         or keterangan like 'UJI%'
+         or akun_lawan_id in (${akunUji})
+         or id in (select jurnal_id from jurnal_baris where akun_id in (${akunUji})
+                                                         or departemen_id in (select id from departemen where nama like 'UJI %'))`,
+    [`%${AKHIRAN_EMAIL}`],
+  );
+  for (let i = 0; i < 6; i++) {
+    await kueri("delete from akun a where kode like 'UJI%' and not exists (select 1 from akun c where c.induk_id = a.id)");
+    await kueri("delete from departemen d where nama like 'UJI %' and not exists (select 1 from departemen c where c.induk_id = d.id)");
+  }
   await kueri("delete from penomoran_counter where penomoran_id in (select id from penomoran where nama like 'UJI %')");
   await kueri("delete from penomoran where nama like 'UJI %'");
   const unggahanUji = `select id from unggahan where diunggah_oleh in (select id from pengguna where email like $1)

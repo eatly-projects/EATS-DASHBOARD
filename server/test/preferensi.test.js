@@ -55,3 +55,11 @@ test("kunci periode menolak transaksi sampai tanggal kunci, dan sebelum periode 
   );
   assert.equal(rows[0].sesudah["Transaksi dikunci sampai"], "31 Januari 2027");
 });
+
+test("saldo awal (sehari sebelum periode) boleh, kecuali periodenya sudah dikunci", async () => {
+  await kueri("update perusahaan set kunci_sampai = null");
+  await pastikanTanggalTerbuka(pool, "2026-12-31", { saldoAwal: true });
+  await assert.rejects(() => pastikanTanggalTerbuka(pool, "2026-12-31"), /sebelum periode akuntansi dimulai/);
+  await kueri("update perusahaan set kunci_sampai = '2026-12-31'");
+  await assert.rejects(() => pastikanTanggalTerbuka(pool, "2026-12-31", { saldoAwal: true }), /sudah dikunci/);
+});

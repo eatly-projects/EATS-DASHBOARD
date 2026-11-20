@@ -20,6 +20,12 @@ import { aksesGrupRouter } from "./features/akses-grup/akses-grup.routes.js";
 import { penomoranRouter } from "./features/penomoran/penomoran.routes.js";
 import { preferensiRouter } from "./features/preferensi/preferensi.routes.js";
 import { logAktivitasRouter } from "./features/log-aktivitas/log-aktivitas.routes.js";
+import { departemenRouter } from "./features/departemen/departemen.routes.js";
+import { akunRouter } from "./features/akun/akun.routes.js";
+import { jurnalUmumRouter, pencatatanBebanRouter } from "./features/jurnal/jurnal.routes.js";
+import { penyetujuRouter } from "./features/persetujuan/penyetuju.routes.js";
+import { persetujuanRouter } from "./features/persetujuan/persetujuan.routes.js";
+import { laporanKeuanganRouter } from "./features/laporan-keuangan/laporan-keuangan.routes.js";
 
 export function buatAplikasi() {
   const app = express();
@@ -59,6 +65,13 @@ export function buatAplikasi() {
   api.use("/penomoran", penomoranRouter);
   api.use("/preferensi", preferensiRouter);
   api.use("/log-aktivitas", logAktivitasRouter);
+  api.use("/departemen", departemenRouter);
+  api.use("/akun", akunRouter);
+  api.use("/jurnal-umum", jurnalUmumRouter);
+  api.use("/pencatatan-beban", pencatatanBebanRouter);
+  api.use("/penyetuju-transaksi", penyetujuRouter);
+  api.use("/persetujuan", persetujuanRouter);
+  api.use("/laporan-keuangan", laporanKeuanganRouter);
 
   app.use("/api", batasApi, api);
   app.get("/", (_req, res) => kirim(res, { nama: "EATS Dashboard API", dokumentasi: "docs/PLANNING.md §6" }));

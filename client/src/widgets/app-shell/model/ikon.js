@@ -3,19 +3,27 @@
 import {
   FiActivity,
   FiBarChart2,
+  FiBookOpen,
   FiBriefcase,
+  FiCheckSquare,
+  FiClock,
+  FiEdit3,
   FiFile,
+  FiFileText,
   FiHash,
+  FiLayers,
+  FiList,
   FiPieChart,
   FiSettings,
   FiShield,
   FiSliders,
+  FiThumbsUp,
   FiUploadCloud,
   FiUsers,
 } from "react-icons/fi";
 
 /** Ikon modul: dipakai judul kelompok di matriks Akses Grup. */
-export const IKON_MODUL = { pengaturan: FiSettings, perusahaan: FiBriefcase, laporan: FiPieChart };
+export const IKON_MODUL = { pengaturan: FiSettings, perusahaan: FiBriefcase, buku_besar: FiBookOpen, laporan: FiPieChart };
 
 export const ikonModul = (kode) => IKON_MODUL[kode] ?? FiFile;
 
@@ -24,8 +32,16 @@ export const IKON_MENU = {
   akses_grup: FiShield,
   pengguna: FiUsers,
   penomoran: FiHash,
+  penyetuju_transaksi: FiCheckSquare,
+  departemen: FiLayers,
+  persetujuan: FiThumbsUp,
   log_aktivitas: FiActivity,
+  akun_perkiraan: FiList,
+  jurnal_umum: FiEdit3,
+  pencatatan_beban: FiFileText,
+  histori_akun: FiClock,
   ringkasan_laba_rugi: FiBarChart2,
+  laporan_keuangan: FiPieChart,
   unggah_laporan: FiUploadCloud,
 };
 
@@ -40,6 +56,14 @@ export const KETERANGAN_MENU = {
   akses_grup: "Menu apa saja yang boleh dibuka dan diubah setiap kelompok Operator",
   pengguna: "Akun yang boleh masuk, levelnya, dan akses grupnya",
   penomoran: "Susunan nomor otomatis untuk setiap jenis transaksi",
+  penyetuju_transaksi: "Transaksi mana yang harus disetujui dulu sebelum masuk pembukuan, dan siapa penyetujunya",
+  departemen: "Lini bisnis untuk memisahkan laba rugi: Maklon, Retail, HORECA, dan Modern Trade",
+  persetujuan: "Transaksi yang menunggu disetujui atau ditolak",
+  akun_perkiraan: "Daftar akun pembukuan beserta saldonya; saldo awal diisi di sini",
+  jurnal_umum: "Catat transaksi apa pun dengan debit dan kredit yang seimbang",
+  pencatatan_beban: "Catat beban yang belum dibayar sebagai utang beban; dibayar nanti lewat Kas & Bank",
+  histori_akun: "Semua transaksi satu akun dalam rentang tanggal, beserta saldo berjalannya",
+  laporan_keuangan: "Neraca, Laba Rugi, Neraca Percobaan, Buku Besar, dan Jurnal; bisa diunduh Excel atau dicetak",
 };
 
 /**

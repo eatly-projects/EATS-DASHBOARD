@@ -56,3 +56,30 @@ test("Operator mendapat menu sesuai akses grupnya", async () => {
     await app.tutup();
   }
 });
+
+test("Administrator mendapat modul Buku Besar beserta hak penuh di Jurnal Umum", async () => {
+  const hak = await muatHak({ peran: "admin", akses_grup_id: null });
+  assert.deepEqual(hak.jurnal_umum, { lihat: true, buat: true, ubah: true, hapus: true });
+  assert.equal(hak.laporan_keuangan.lihat, true);
+  assert.equal(hak.laporan_keuangan.buat, false);
+  const nav = susunNavigasi(hak);
+  const bukuBesar = nav.modul.find((m) => m.kode === "buku_besar");
+  assert.deepEqual(bukuBesar.menu.map((m) => m.kode), ["akun_perkiraan", "jurnal_umum", "pencatatan_beban", "histori_akun"]);
+  const perusahaan = nav.modul.find((m) => m.kode === "perusahaan");
+  assert.ok(perusahaan.menu.some((m) => m.kode === "departemen"));
+  assert.ok(perusahaan.menu.some((m) => m.kode === "persetujuan"));
+});
+
+test("matriks Akses Grup memuat menu Buku Besar, tanpa Pengaturan", async () => {
+  const admin = await buatPenggunaUji({ peran: "admin" });
+  const app = await jalankanAplikasi();
+  try {
+    const r = await panggil(app.url, await masuk(app.url, admin), "GET", "/akses-grup/menu");
+    const kode = r.body.data.flatMap((m) => m.menu.map((x) => x.kode));
+    assert.ok(kode.includes("jurnal_umum"));
+    assert.ok(kode.includes("laporan_keuangan"));
+    assert.ok(!kode.includes("penyetuju_transaksi"));
+  } finally {
+    await app.tutup();
+  }
+});

@@ -60,7 +60,7 @@ export function KerangkaDaftarForm({ namaData, bisaBuat = false, renderDaftar, r
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-2 border-b border-border">
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-2 border-b border-border print:hidden">
         <div className="flex min-w-0 flex-1 flex-wrap items-end gap-x-3">
           <button
             type="button"

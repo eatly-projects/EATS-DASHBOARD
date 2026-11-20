@@ -14,8 +14,15 @@ export const NAMA_RESET = { tidak: "Tidak pernah", hari: "Setiap hari", bulan: "
 /** Tanggal hari ini di Jakarta, 'YYYY-MM-DD'. */
 export const hariIni = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
 
-/** Nomor berikutnya. WAJIB dipanggil dengan klien transaksi dokumen yang sedang disimpan. */
-export async function ambilNomorBerikut(klien, tipeTransaksi, tanggal, penomoranId = null) {
+const BATAS_LOMPAT = 1000;
+
+/**
+ * Nomor berikutnya. WAJIB dipanggil dengan klien transaksi dokumen yang sedang disimpan,
+ * dan sebaiknya sesaat sebelum commit, supaya kunci baris nomor urut ditahan sesingkat mungkin.
+ * `dipakai(nomor)`: nomor yang sudah dipakai dokumen lain (mis. dari penomoran lain bersusunan
+ * sama) dilompati, jadi nomor dokumen tidak pernah kembar.
+ */
+export async function ambilNomorBerikut(klien, tipeTransaksi, tanggal, penomoranId = null, { dipakai } = {}) {
   const { rows } = penomoranId
     ? await klien.query("select * from penomoran where id = $1", [penomoranId])
     : await klien.query("select * from penomoran where tipe_transaksi = $1 and bawaan", [tipeTransaksi]);
@@ -23,13 +30,17 @@ export async function ambilNomorBerikut(klien, tipeTransaksi, tanggal, penomoran
   if (!p) {
     throw new AppError(409, "PENOMORAN_BELUM_ADA", `Belum ada penomoran bawaan untuk ${namaTipe(tipeTransaksi)}. Buat di Pengaturan, menu Penomoran.`);
   }
-  const { rows: c } = await klien.query(
-    `insert into penomoran_counter (penomoran_id, kunci_periode, terakhir) values ($1, $2, 1)
-     on conflict (penomoran_id, kunci_periode) do update set terakhir = penomoran_counter.terakhir + 1
-     returning terakhir`,
-    [p.id, kunciPeriode(p.reset, tanggal)],
-  );
-  return susunNomor(p, tanggal, c[0].terakhir);
+  for (let i = 0; i < BATAS_LOMPAT; i++) {
+    const { rows: c } = await klien.query(
+      `insert into penomoran_counter (penomoran_id, kunci_periode, terakhir) values ($1, $2, 1)
+       on conflict (penomoran_id, kunci_periode) do update set terakhir = penomoran_counter.terakhir + 1
+       returning terakhir`,
+      [p.id, kunciPeriode(p.reset, tanggal)],
+    );
+    const nomor = susunNomor(p, tanggal, c[0].terakhir);
+    if (!dipakai || !(await dipakai(nomor))) return nomor;
+  }
+  throw new AppError(409, "NOMOR_HABIS", `Tidak menemukan nomor ${namaTipe(tipeTransaksi)} yang belum dipakai. Periksa susunan di Pengaturan, menu Penomoran.`);
 }
 
 const rapikanFormat = (format) => format.map((b) => (b.jenis === "teks" ? { jenis: "teks", nilai: String(b.nilai) } : { jenis: b.jenis }));

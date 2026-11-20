@@ -39,14 +39,17 @@ function TombolAksi({ a, onTekan, hp }) {
   );
 }
 
-/** `tab`: bagian formulir [{ kunci, judul, isi }], ditampilkan bertumpuk berurutan. */
-export function FormDokumen({ tab, aksi = [] }) {
+/**
+ * `tab`: bagian formulir [{ kunci, judul, isi }], ditampilkan bertumpuk berurutan.
+ * `catatan`: kalimat pendek di dekat tombol, mis. kenapa Simpan belum bisa ditekan.
+ */
+export function FormDokumen({ tab, aksi = [], catatan = null }) {
   const [konfirmasi, setKonfirmasi] = useState(null);
   const tekan = (a) => (a.konfirmasi ? setKonfirmasi(a) : a.onClick());
 
   return (
     <div className="flex items-start gap-5">
-      <div className={cn("min-w-0 flex-1 space-y-4", aksi.length && "pb-20 md:pb-0")}>
+      <div className={cn("min-w-0 flex-1 space-y-4", aksi.length && (catatan ? "pb-32 md:pb-0" : "pb-20 md:pb-0"))}>
         {tab.map((t) => (
           <section key={t.kunci} aria-label={t.judul} className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-6">
             {tab.length > 1 && <h3 className="mb-4 text-base font-bold text-foreground md:text-lg">{t.judul}</h3>}
@@ -57,15 +60,19 @@ export function FormDokumen({ tab, aksi = [] }) {
 
       {aksi.length > 0 && (
         <>
-          <aside className="sticky top-16 hidden w-40 shrink-0 flex-col gap-2 md:flex" aria-label="Aksi">
+          <aside className="sticky top-16 hidden w-40 shrink-0 flex-col gap-2 md:flex print:hidden" aria-label="Aksi">
             {aksi.map((a) => (
               <TombolAksi key={a.kunci} a={a} onTekan={() => tekan(a)} />
             ))}
+            {catatan && <p className="text-xs leading-snug text-muted-foreground">{catatan}</p>}
           </aside>
-          <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-border bg-card p-3 shadow-elevated md:hidden">
-            {aksi.map((a) => (
-              <TombolAksi key={a.kunci} a={a} onTekan={() => tekan(a)} hp />
-            ))}
+          <div className="fixed inset-x-0 bottom-0 z-30 space-y-2 border-t border-border bg-card p-3 shadow-elevated md:hidden print:hidden">
+            {catatan && <p className="text-xs leading-snug text-muted-foreground">{catatan}</p>}
+            <div className="flex gap-2">
+              {aksi.map((a) => (
+                <TombolAksi key={a.kunci} a={a} onTekan={() => tekan(a)} hp />
+              ))}
+            </div>
           </div>
         </>
       )}

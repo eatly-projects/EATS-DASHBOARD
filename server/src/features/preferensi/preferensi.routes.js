@@ -13,10 +13,12 @@ const PILIH = `select p.nama, p.alamat, p.telepon, p.email, p.npwp,
                       to_char(p.mulai_periode, 'YYYY-MM-DD') as mulai_periode,
                       to_char(p.kunci_sampai, 'YYYY-MM-DD') as kunci_sampai,
                       p.akun_ekuitas_saldo_awal_id, e.kode || ' ' || e.nama as akun_ekuitas_saldo_awal_nama,
-                      p.akun_laba_ditahan_id, l.kode || ' ' || l.nama as akun_laba_ditahan_nama
+                      p.akun_laba_ditahan_id, l.kode || ' ' || l.nama as akun_laba_ditahan_nama,
+                      p.akun_rekening_utama_id, r.kode || ' ' || r.nama as akun_rekening_utama_nama
                  from perusahaan p
                  left join akun e on e.id = p.akun_ekuitas_saldo_awal_id
-                 left join akun l on l.id = p.akun_laba_ditahan_id`;
+                 left join akun l on l.id = p.akun_laba_ditahan_id
+                 left join akun r on r.id = p.akun_rekening_utama_id`;
 
 const POLA_TANGGAL = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const tanggalSah = (v) => POLA_TANGGAL.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) && new Date(`${v}T00:00:00Z`).toISOString().startsWith(v);
@@ -47,6 +49,8 @@ const skema = z.object({
   // Tidak dikirim = tetap seperti sebelumnya.
   akun_ekuitas_saldo_awal_id: z.uuid({ error: "Akun Ekuitas Saldo Awal tidak dikenal." }).optional(),
   akun_laba_ditahan_id: z.uuid({ error: "Akun Laba Ditahan tidak dikenal." }).optional(),
+  // Kosong (null) atau tidak dikirim = tetap seperti sebelumnya.
+  akun_rekening_utama_id: z.uuid({ error: "Rekening utama tidak dikenal." }).nullable().optional(),
 });
 
 async function pastikanAkunModal(k, id, label) {
@@ -59,6 +63,16 @@ async function pastikanAkunModal(k, id, label) {
   if (a.nonaktif) throw galat.permintaan(`${label} tidak boleh akun nonaktif.`);
 }
 
+async function pastikanAkunKasBank(k, id) {
+  if (!id) return;
+  const { rows } = await k.query("select tipe, nonaktif, exists (select 1 from akun c where c.induk_id = akun.id) as punya_anak from akun where id = $1", [id]);
+  const a = rows[0];
+  if (!a) throw galat.permintaan("Rekening utama tidak ditemukan.");
+  if (a.tipe !== "kas_bank") throw galat.permintaan("Rekening utama harus akun bertipe Kas & Bank.");
+  if (a.punya_anak) throw galat.permintaan("Rekening utama harus akun detail, bukan akun induk.");
+  if (a.nonaktif) throw galat.permintaan("Rekening utama tidak boleh akun nonaktif.");
+}
+
 const potret = (p) => ({
   "Nama perusahaan": p.nama,
   Alamat: p.alamat || "—",
@@ -69,6 +83,7 @@ const potret = (p) => ({
   "Transaksi dikunci sampai": p.kunci_sampai ? tanggalPanjang(p.kunci_sampai) : "Tidak dikunci",
   "Akun Ekuitas Saldo Awal": p.akun_ekuitas_saldo_awal_nama || "—",
   "Akun Laba Ditahan": p.akun_laba_ditahan_nama || "—",
+  "Rekening utama": p.akun_rekening_utama_nama || "—",
 });
 
 // Nama perusahaan tampil di bilah atas untuk semua pengguna.
@@ -106,14 +121,17 @@ preferensiRouter.put("/", hanyaAdmin, async (req, res) => {
     const labaDitahan = b.akun_laba_ditahan_id ?? lama[0].akun_laba_ditahan_id;
     await pastikanAkunModal(k, ekuitas, "Akun Ekuitas Saldo Awal");
     await pastikanAkunModal(k, labaDitahan, "Akun Laba Ditahan");
+    const rekeningUtama = b.akun_rekening_utama_id ?? lama[0].akun_rekening_utama_id;
+    if (rekeningUtama !== lama[0].akun_rekening_utama_id) await pastikanAkunKasBank(k, rekeningUtama);
     if (ekuitas !== lama[0].akun_ekuitas_saldo_awal_id) {
       const { rows: sa } = await k.query("select 1 from jurnal where tipe = 'saldo_awal' limit 1");
       if (sa[0]) throw galat.bentrok("Akun Ekuitas Saldo Awal tidak bisa diganti karena sudah ada saldo awal yang memakainya.");
     }
     await k.query(
       `update perusahaan set nama = $1, alamat = $2, telepon = $3, email = $4, npwp = $5, mulai_periode = $6, kunci_sampai = $7,
-              akun_ekuitas_saldo_awal_id = $9, akun_laba_ditahan_id = $10, diubah_at = now(), diubah_oleh = $8`,
-      [b.nama, b.alamat, b.telepon, b.email, b.npwp, b.mulai_periode, b.kunci_sampai, req.pengguna.id, ekuitas, labaDitahan],
+              akun_ekuitas_saldo_awal_id = $9, akun_laba_ditahan_id = $10, akun_rekening_utama_id = $11,
+              diubah_at = now(), diubah_oleh = $8`,
+      [b.nama, b.alamat, b.telepon, b.email, b.npwp, b.mulai_periode, b.kunci_sampai, req.pengguna.id, ekuitas, labaDitahan, rekeningUtama],
     );
     const { rows: baru } = await k.query(PILIH);
     await catatLog(k, req, { tindakan: "ubah", menu: "preferensi", referensi: "Preferensi", sebelum: potret(lama[0]), sesudah: potret(baru[0]) });

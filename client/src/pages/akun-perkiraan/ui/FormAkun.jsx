@@ -13,7 +13,7 @@ import { useHak } from "@/entities/navigasi";
 import { formatRupiah } from "@/shared/lib/uang";
 import { tanggal } from "@/shared/lib/format";
 
-const KOSONG = { tipe: "", kode: "", nama: "", induk_id: null, saldo_awal: "", catatan: "", nonaktif: false };
+const KOSONG = { tipe: "", kode: "", nama: "", induk_id: null, saldo_awal: "", catatan: "", nonaktif: false, bank_nama: "", nomor_rekening_akhir: "" };
 const TANPA_INDUK = "__tanpa_induk";
 
 const dariServer = (a) => ({
@@ -24,8 +24,11 @@ const dariServer = (a) => ({
   saldo_awal: a.saldo_awal ?? "",
   catatan: a.catatan ?? "",
   nonaktif: a.nonaktif,
+  bank_nama: a.bank_nama ?? "",
+  nomor_rekening_akhir: a.nomor_rekening_akhir ?? "",
 });
-const baku = (x) => JSON.stringify({ ...x, kode: x.kode.trim(), nama: x.nama.trim(), catatan: x.catatan.trim(), saldo_awal: x.saldo_awal || "0" });
+const baku = (x) =>
+  JSON.stringify({ ...x, kode: x.kode.trim(), nama: x.nama.trim(), catatan: x.catatan.trim(), bank_nama: x.bank_nama.trim(), saldo_awal: x.saldo_awal || "0" });
 
 /** "2027-01-01" → "2026-12-31" (sehari sebelumnya, tanpa zona waktu). */
 function sehariSebelum(iso) {
@@ -129,7 +132,7 @@ export function FormAkun({ id, tutup, setelahSimpan, tandaiBerubah }) {
                   htmlFor={`tipe-${kunci}`}
                   petunjuk={tipeTerkunci ? "Tidak bisa diganti karena akun sudah dipakai, punya saldo awal, atau punya sub akun." : null}
                 >
-                  <Select value={isian.tipe} onValueChange={(v) => ubah({ tipe: v, induk_id: null })} disabled={!bolehUbah || tipeTerkunci}>
+                  <Select value={isian.tipe} onValueChange={(v) => ubah({ tipe: v, induk_id: null, ...(v === "kas_bank" ? {} : { bank_nama: "", nomor_rekening_akhir: "" }) })} disabled={!bolehUbah || tipeTerkunci}>
                     <SelectTrigger id={`tipe-${kunci}`}>
                       <SelectValue placeholder="Pilih tipe akun" />
                     </SelectTrigger>
@@ -170,6 +173,32 @@ export function FormAkun({ id, tutup, setelahSimpan, tandaiBerubah }) {
                   <Input id={`nama-${kunci}`} value={isian.nama} maxLength={100} onChange={(e) => ubah({ nama: e.target.value })} placeholder="Misalnya: Bank BCA 123-456" />
                 </Isian>
               </div>
+              {isian.tipe === "kas_bank" && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Isian label="Nama bank (boleh kosong)" htmlFor={`bank-${kunci}`} petunjuk="Kosongkan untuk kas tunai.">
+                    <Input id={`bank-${kunci}`} value={isian.bank_nama} maxLength={50} onChange={(e) => ubah({ bank_nama: e.target.value })} placeholder="Misalnya: BCA" />
+                  </Isian>
+                  <Isian
+                    label="Nomor rekening, 4 angka terakhir (boleh kosong)"
+                    htmlFor={`norek-${kunci}`}
+                    petunjuk="Dipakai untuk mencocokkan rekening tujuan dari aplikasi Operasional."
+                  >
+                    <Input
+                      id={`norek-${kunci}`}
+                      value={isian.nomor_rekening_akhir}
+                      inputMode="numeric"
+                      maxLength={4}
+                      onChange={(e) => ubah({ nomor_rekening_akhir: e.target.value.replace(/[^0-9]/g, "") })}
+                      placeholder="Misalnya: 1234"
+                    />
+                  </Isian>
+                </div>
+              )}
+              {data?.rekening_utama && (
+                <p className="rounded-lg bg-[hsl(var(--accent))]/50 px-3 py-2 text-sm text-foreground">
+                  Ini rekening utama. Gantinya diatur di Pengaturan, menu Preferensi.
+                </p>
+              )}
               {data && (
                 <p className="rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
                   Saldo saat ini: <span className="font-semibold tabular-nums text-foreground">{formatRupiah(data.saldo)}</span>

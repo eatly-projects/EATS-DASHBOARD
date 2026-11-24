@@ -1,5 +1,7 @@
 // Tampilan setiap laporan keuangan. Angka rupiah penuh; sel tanpa nilai ditulis "—";
 // baris jumlah tebal. Di HP tabel bisa digeser dengan kolom nama tetap terlihat.
+import { Fragment } from "react";
+import { Link } from "react-router-dom";
 import { FiAlertTriangle } from "react-icons/fi";
 import { cn } from "@/shared/lib/cn";
 import { formatRupiah, keSen } from "@/shared/lib/uang";
@@ -243,7 +245,8 @@ export function NeracaPercobaan({ data }) {
 }
 
 // ── Rincian Buku Besar / Histori Akun ─────────────────────────────────────
-export function BukuBesar({ data }) {
+/** `tautanNomor(baris)`: alamat dokumen asal (Histori Bank), atau null untuk nomor biasa. */
+export function BukuBesar({ data, tautanNomor }) {
   if (!data.akun.length) return <Kosong />;
   return (
     <div className="space-y-5">
@@ -297,7 +300,15 @@ export function BukuBesar({ data }) {
                 {a.baris.map((r, i) => (
                   <tr key={i} className="border-t border-border/60">
                     <td className={cn(TD, TEMPEL, "whitespace-nowrap")}>{tanggal(r.tanggal)}</td>
-                    <td className={cn(TD, "whitespace-nowrap tabular-nums")}>{r.nomor ?? "—"}</td>
+                    <td className={cn(TD, "whitespace-nowrap tabular-nums")}>
+                      {tautanNomor?.(r) && r.nomor ? (
+                        <Link to={tautanNomor(r)} className="font-medium text-[hsl(var(--primary))] underline-offset-2 hover:underline print:text-foreground">
+                          {r.nomor}
+                        </Link>
+                      ) : (
+                        (r.nomor ?? "—")
+                      )}
+                    </td>
                     <td className={cn(TD, "whitespace-nowrap")}>{r.tipe_nama}</td>
                     <td className={TD}>
                       {r.keterangan || "—"}
@@ -321,6 +332,81 @@ export function BukuBesar({ data }) {
           </div>
         </section>
       ))}
+    </div>
+  );
+}
+
+// ── Arus Kas (metode langsung) ────────────────────────────────────────────
+export function ArusKas({ data }) {
+  const kolom = data.kolom;
+  const n = kolom.length;
+  const BarisNilai = ({ judul, nilai, kelas, tebal }) => (
+    <tr className={cn("border-t border-border", kelas)}>
+      <td className={cn(TD, TEMPEL, tebal && "font-bold")}>{judul}</td>
+      {kolom.map((k) => (
+        <td key={k.kunci} className={cn(ANGKA, tebal && "font-bold")}>
+          {jumlah(nilai[k.kunci])}
+        </td>
+      ))}
+    </tr>
+  );
+  return (
+    <div className="space-y-3">
+      {data.departemen_nama && (
+        <p className="text-sm text-muted-foreground">Hanya arus kas lini bisnis {data.departemen_nama}. Saldo kas tidak dipisah per lini bisnis.</p>
+      )}
+      {data.cocok === false && (
+        <p className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <FiAlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> Saldo kas tidak nyambung dengan arus kasnya; laporkan ke Lutfi.
+        </p>
+      )}
+      <div className={KOTAK}>
+        <table className="w-full text-sm" style={{ minWidth: `${18 + n * 9}rem` }}>
+          <thead>
+            <tr className="bg-muted text-muted-foreground">
+              <th scope="col" className={cn(TH, TEMPEL, "bg-muted")}>
+                Akun
+              </th>
+              {kolom.map((k) => (
+                <th key={k.kunci} scope="col" className={cn(TH, "text-right")}>
+                  {k.nama}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.bagian.map((b) => (
+              <Fragment key={b.kunci}>
+                <BarisJudul judul={b.judul} kolom={n} />
+                {b.baris.length === 0 ? (
+                  <tr className="border-t border-border/60">
+                    <td className={cn(TD, TEMPEL, "text-muted-foreground")}>Tidak ada arus kas di rentang ini.</td>
+                    <td colSpan={n} />
+                  </tr>
+                ) : (
+                  b.baris.map((r) => (
+                    <tr key={r.akun_id} className="border-t border-border/60">
+                      <td className={cn(TD, TEMPEL, "pl-6")}>
+                        <span className="mr-2 tabular-nums text-muted-foreground">{r.kode}</span>
+                        {r.nama}
+                      </td>
+                      {kolom.map((k) => (
+                        <td key={k.kunci} className={ANGKA}>
+                          {sel(r.nilai[k.kunci])}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+                <BarisNilai judul={b.judul_total} nilai={b.total} kelas="font-semibold" />
+              </Fragment>
+            ))}
+            <BarisNilai judul="Kenaikan atau Penurunan Kas Bersih" nilai={data.kenaikan} kelas="border-t-2" tebal />
+            {data.saldo_awal && <BarisNilai judul="Saldo Kas Awal" nilai={data.saldo_awal} />}
+            {data.saldo_akhir && <BarisNilai judul="Saldo Kas Akhir" nilai={data.saldo_akhir} tebal />}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

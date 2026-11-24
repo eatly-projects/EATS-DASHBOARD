@@ -4,6 +4,7 @@
 import { pool } from "../../shared/db/pool.js";
 import { galat } from "../../shared/http.js";
 import { dariSen, keSen } from "../../shared/uang.js";
+import { bulanTahun } from "../../shared/format.js";
 import { TIPE_LABA_RUGI, namaTipeAkun, saldoNormal, tipeAkun } from "../akun/tipe-akun.js";
 import { NAMA_TIPE_JURNAL } from "../jurnal/jurnal.service.js";
 
@@ -296,7 +297,7 @@ export async function bukuBesar({ dari, sampai, akunId }) {
   const ids = akun.map((a) => a.id);
   const petaAwal = await saldoAwalTahunan(dari, ids);
   const { rows: mutasi } = await pool.query(
-    `select b.akun_id, to_char(j.tanggal, 'YYYY-MM-DD') as tanggal, j.nomor, j.tipe, j.keterangan, b.catatan,
+    `select b.akun_id, j.id as jurnal_id, to_char(j.tanggal, 'YYYY-MM-DD') as tanggal, j.nomor, j.tipe, j.keterangan, b.catatan,
             b.debit::text as debit, b.kredit::text as kredit, d.nama as departemen_nama
        from jurnal_baris b ${DISETUJUI} left join departemen d on d.id = b.departemen_id
       where j.tanggal between $1 and $2 and b.akun_id = any($3::uuid[])
@@ -323,6 +324,8 @@ export async function bukuBesar({ dari, sampai, akunId }) {
       totalDebit += debit;
       totalKredit += kredit;
       return {
+        jurnal_id: m.jurnal_id,
+        tipe: m.tipe,
         tanggal: m.tanggal,
         nomor: m.nomor,
         tipe_nama: NAMA_TIPE_JURNAL[m.tipe],
@@ -347,6 +350,214 @@ export async function bukuBesar({ dari, sampai, akunId }) {
     });
   }
   return { judul: "Rincian Buku Besar", dari, sampai, akun: hasil };
+}
+
+// ── Histori Bank ──────────────────────────────────────────────────────────
+/** Rincian Buku Besar khusus akun Kas & Bank; tanpa akun = rekening utama di Preferensi. */
+export async function historiBank({ dari, sampai, akunId }) {
+  let id = akunId;
+  if (!id) {
+    const { rows } = await pool.query("select akun_rekening_utama_id as id from perusahaan");
+    id = rows[0]?.id;
+    if (!id) throw galat.permintaan("Pilih rekening.");
+  }
+  const { rows } = await pool.query("select tipe from akun where id = $1", [id]);
+  if (!rows[0]) throw galat.tidakAda("Akun tidak ditemukan.");
+  if (rows[0].tipe !== "kas_bank") throw galat.permintaan("Histori Bank hanya untuk akun Kas & Bank.");
+  return { ...(await bukuBesar({ dari, sampai, akunId: id })), judul: "Histori Bank" };
+}
+
+// ── Arus Kas (metode langsung) ────────────────────────────────────────────
+// Arus kas = baris akun BUKAN Kas & Bank di jurnal yang menyentuh Kas & Bank:
+// efek = kredit − debit (positif = uang masuk). Jurnal seimbang, jadi jumlah efek
+// satu jurnal = perubahan saldo kas jurnal itu. Transfer antar-rekening tidak punya
+// baris bukan kas, jadi tidak muncul. Jurnal Saldo Awal sudah menjadi Saldo Kas Awal.
+const KELOMPOK_ARUS = [
+  {
+    kunci: "operasi",
+    judul: "Arus Kas dari Aktivitas Operasi",
+    tipe: [
+      "pendapatan",
+      "pendapatan_lainnya",
+      "beban_pokok_penjualan",
+      "beban",
+      "beban_lainnya",
+      "piutang_usaha",
+      "persediaan",
+      "aset_lancar_lainnya",
+      "utang_usaha",
+      "liabilitas_jangka_pendek",
+    ],
+  },
+  { kunci: "investasi", judul: "Arus Kas dari Aktivitas Investasi", tipe: ["aset_tetap", "akumulasi_penyusutan", "aset_lainnya"] },
+  { kunci: "pendanaan", judul: "Arus Kas dari Aktivitas Pendanaan", tipe: ["liabilitas_jangka_panjang", "modal"] },
+];
+const BULAN_MAKS = 12;
+
+const akhirBulan = (tahun, bulan) => new Date(Date.UTC(tahun, bulan, 0)).toISOString().slice(0, 10);
+
+/** Satu kolom per bulan kalender yang tersentuh [dari, sampai], dipotong ke rentang. */
+function kolomBulan(dari, sampai) {
+  const kolom = [];
+  let [tahun, bulan] = dari.slice(0, 7).split("-").map(Number);
+  for (;;) {
+    const kunci = `${String(tahun).padStart(4, "0")}-${String(bulan).padStart(2, "0")}`;
+    if (kunci > sampai.slice(0, 7)) break;
+    const awal = `${kunci}-01`;
+    const akhir = akhirBulan(tahun, bulan);
+    kolom.push({ kunci, nama: bulanTahun(awal), dari: awal < dari ? dari : awal, sampai: akhir > sampai ? sampai : akhir });
+    bulan += 1;
+    if (bulan > 12) {
+      bulan = 1;
+      tahun += 1;
+    }
+  }
+  return kolom;
+}
+
+const SYARAT_JURNAL_KAS = `
+  j.status = 'disetujui' and j.tipe <> 'saldo_awal'
+  and exists (select 1 from jurnal_baris bk join akun ak on ak.id = bk.akun_id where bk.jurnal_id = j.id and ak.tipe = 'kas_bank')`;
+
+/**
+ * Saldo semua akun Kas & Bank (sen): sebelum `dari`, dan perubahan per tanggal sampai `sampai`.
+ * Jurnal Saldo Awal selalu masuk saldo pembuka (bukan perubahan harian), karena Arus Kas tidak
+ * menghitungnya sebagai arus; kalau tidak, saldo tidak nyambung di rentang yang memuat tanggalnya.
+ */
+async function saldoKasHarian(dari, sampai) {
+  const { rows: awal } = await pool.query(
+    `select coalesce(sum(b.debit - b.kredit), 0)::text as dk
+       from jurnal_baris b ${DISETUJUI} join akun a on a.id = b.akun_id
+      where a.tipe = 'kas_bank' and (j.tanggal < $1 or j.tipe = 'saldo_awal')`,
+    [dari],
+  );
+  const { rows } = await pool.query(
+    `select to_char(j.tanggal, 'YYYY-MM-DD') as tanggal, sum(b.debit - b.kredit)::text as dk
+       from jurnal_baris b ${DISETUJUI} join akun a on a.id = b.akun_id
+      where a.tipe = 'kas_bank' and j.tipe <> 'saldo_awal' and j.tanggal between $1 and $2
+      group by j.tanggal order by j.tanggal`,
+    [dari, sampai],
+  );
+  return { awal: keSen(awal[0].dk), harian: rows.map((r) => ({ tanggal: r.tanggal, sen: keSen(r.dk) })) };
+}
+
+export async function arusKas({ dari, sampai, departemenId = null }) {
+  periksaRentang(dari, sampai);
+  const bulan = kolomBulan(dari, sampai);
+  if (bulan.length > BULAN_MAKS) throw galat.permintaan(`Rentang Arus Kas paling panjang ${BULAN_MAKS} bulan.`);
+  let departemenNama = null;
+  if (departemenId) {
+    const { rows } = await pool.query("select nama from departemen where id = $1", [departemenId]);
+    if (!rows[0]) throw galat.permintaan("Lini bisnis tidak ditemukan.");
+    departemenNama = rows[0].nama;
+  }
+  const kolom = [...bulan, { kunci: TOTAL, nama: "Total", dari, sampai }];
+  const akun = await muatAkunDetail();
+  const { rows } = await pool.query(
+    `select b.akun_id, to_char(j.tanggal, 'YYYY-MM') as bulan, sum(b.kredit - b.debit)::text as efek
+       from jurnal_baris b join jurnal j on j.id = b.jurnal_id join akun a on a.id = b.akun_id
+      where j.tanggal between $1 and $2 and ${SYARAT_JURNAL_KAS}
+        and a.tipe <> 'kas_bank' and ($3::uuid is null or b.departemen_id = $3)
+      group by b.akun_id, to_char(j.tanggal, 'YYYY-MM')`,
+    [dari, sampai, departemenId],
+  );
+  const nilai = new Map();
+  for (const r of rows) {
+    if (!nilai.has(r.akun_id)) nilai.set(r.akun_id, new Map());
+    const m = nilai.get(r.akun_id);
+    const sen = keSen(r.efek);
+    tambahNilai(m, r.bulan, sen);
+    tambahNilai(m, TOTAL, sen);
+  }
+  const kenaikan = new Map(kolom.map((k) => [k.kunci, NOL]));
+  const bagian = KELOMPOK_ARUS.map((g) => {
+    const total = new Map(kolom.map((k) => [k.kunci, NOL]));
+    const baris = akun
+      .filter((a) => g.tipe.includes(a.tipe) && nilai.has(a.id) && [...nilai.get(a.id).values()].some((v) => v !== NOL))
+      .map((a) => {
+        const m = nilai.get(a.id);
+        for (const k of kolom) {
+          tambahNilai(total, k.kunci, m.get(k.kunci) ?? NOL);
+          tambahNilai(kenaikan, k.kunci, m.get(k.kunci) ?? NOL);
+        }
+        return { akun_id: a.id, kode: a.kode, nama: a.nama, nilai: Object.fromEntries(kolom.map((k) => [k.kunci, dariSen(m.get(k.kunci) ?? NOL)])) };
+      });
+    return { kunci: g.kunci, judul: g.judul, judul_total: `Jumlah ${g.judul}`, baris, total: keTeks(total) };
+  });
+
+  let saldoAwal = null;
+  let saldoAkhir = null;
+  let cocok = null;
+  if (!departemenId) {
+    const { awal, harian } = await saldoKasHarian(dari, sampai);
+    const saldoSampai = (tanggal) => harian.filter((h) => h.tanggal <= tanggal).reduce((s, h) => s + h.sen, awal);
+    const saldoSebelum = (tanggal) => harian.filter((h) => h.tanggal < tanggal).reduce((s, h) => s + h.sen, awal);
+    saldoAwal = new Map(kolom.map((k) => [k.kunci, saldoSebelum(k.dari)]));
+    saldoAkhir = new Map(kolom.map((k) => [k.kunci, saldoSampai(k.sampai)]));
+    cocok = kolom.every((k) => saldoAwal.get(k.kunci) + kenaikan.get(k.kunci) === saldoAkhir.get(k.kunci));
+  }
+  return {
+    judul: departemenNama ? `Arus Kas Lini Bisnis ${departemenNama}` : "Arus Kas",
+    dari,
+    sampai,
+    departemen_nama: departemenNama,
+    kolom,
+    bagian,
+    kenaikan: keTeks(kenaikan),
+    saldo_awal: saldoAwal && keTeks(saldoAwal),
+    saldo_akhir: saldoAkhir && keTeks(saldoAkhir),
+    cocok,
+  };
+}
+
+// ── Ringkasan Kas & Bank (widget halaman utama) ───────────────────────────
+export async function ringkasanKasBank({ per }) {
+  const { rows } = await pool.query(
+    `select a.id, a.kode, a.nama, a.bank_nama, a.nomor_rekening_akhir, a.nonaktif,
+            coalesce(p.akun_rekening_utama_id = a.id, false) as utama,
+            (select sum(b.debit - b.kredit)::text from jurnal_baris b ${DISETUJUI}
+              where b.akun_id = a.id and j.tanggal <= $1) as dk
+       from akun a cross join perusahaan p
+      where a.tipe = 'kas_bank' and not exists (select 1 from akun c where c.induk_id = a.id)
+      order by a.kode`,
+    [per],
+  );
+  // Rekening nonaktif hanya tampil kalau masih ada saldonya.
+  const rekening = rows
+    .filter((r) => !r.nonaktif || (r.dk !== null && keSen(r.dk) !== NOL))
+    .map((r) => ({
+      akun_id: r.id,
+      kode: r.kode,
+      nama: r.nama,
+      bank_nama: r.bank_nama,
+      nomor_rekening_akhir: r.nomor_rekening_akhir,
+      utama: r.utama,
+      saldo: r.dk === null ? null : dariSen(keSen(r.dk)),
+    }));
+  const terukur = rekening.filter((r) => r.saldo !== null);
+  const total = terukur.length ? dariSen(terukur.reduce((s, r) => s + keSen(r.saldo), NOL)) : null;
+  // Sebelum periode akuntansi dimulai belum ada pembukuan: arus bulan ini kosong, bukan Rp 0.
+  const { mulai_periode: mulai } = await infoPerusahaan();
+  const awalBulan = `${per.slice(0, 7)}-01` < mulai ? mulai : `${per.slice(0, 7)}-01`;
+  if (per < mulai) {
+    return { per, rekening, total, bulan: { dari: `${per.slice(0, 7)}-01`, sampai: per, masuk: null, keluar: null, bersih: null } };
+  }
+  const { rows: arus } = await pool.query(
+    `select coalesce(sum(greatest(n, 0)), 0)::text as masuk, coalesce(sum(greatest(-n, 0)), 0)::text as keluar
+       from (select b.jurnal_id, sum(b.debit - b.kredit) as n
+               from jurnal_baris b join jurnal j on j.id = b.jurnal_id join akun a on a.id = b.akun_id
+              where a.tipe = 'kas_bank' and j.status = 'disetujui' and j.tipe <> 'saldo_awal' and j.tanggal between $1 and $2
+              group by b.jurnal_id) x`,
+    [awalBulan, per],
+  );
+  const masuk = keSen(arus[0].masuk);
+  const keluar = keSen(arus[0].keluar);
+  return {
+    per,
+    rekening,
+    total,
+    bulan: { dari: awalBulan, sampai: per, masuk: dariSen(masuk), keluar: dariSen(keluar), bersih: dariSen(masuk - keluar) },
+  };
 }
 
 // ── Keseluruhan Jurnal ────────────────────────────────────────────────────

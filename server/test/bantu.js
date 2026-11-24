@@ -42,6 +42,8 @@ export async function bersihkanDataUji() {
   await pastikanSkemaUji();
   // Buku Besar (Tahap 1): jurnal dulu (barisnya ikut terhapus), lalu akun anak → induk, lalu departemen.
   const akunUji = "select id from akun where kode like 'UJI%'";
+  // Rekening utama yang tertinggal di akun uji (tes gagal di tengah) dikembalikan ke 110102 Bank.
+  await kueri(`update perusahaan set akun_rekening_utama_id = (select id from akun where kode = '110102') where akun_rekening_utama_id in (${akunUji})`);
   await kueri(
     `delete from jurnal
       where dibuat_oleh in (select id from pengguna where email like $1)

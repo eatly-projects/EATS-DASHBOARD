@@ -11,6 +11,9 @@ import { formatRupiah } from "@/shared/lib/uang";
 import { tanggal, tanggalJam } from "@/shared/lib/format";
 import { LencanaStatusJurnal } from "@/shared/ui/LencanaStatusJurnal";
 
+// Label akun kepala per tipe transaksi.
+const LABEL_KEPALA = { pencatatan_beban: "Hutang beban", penerimaan: "Setor ke", pembayaran: "Bayar dari", transfer_bank: "Dari rekening" };
+
 function Data({ label, children }) {
   return (
     <div>
@@ -64,7 +67,8 @@ export function DetailPersetujuan({ id, tutup }) {
                     {j.diubah_at ? ` (terakhir diubah ${tanggalJam(j.diubah_at)})` : ""}
                   </Data>
                   <Data label="Penyetuju">{namaPenyetuju}</Data>
-                  {j.akun_lawan_nama && <Data label="Hutang beban">{j.akun_lawan_nama}</Data>}
+                  {j.akun_lawan_nama && <Data label={LABEL_KEPALA[j.tipe] ?? "Akun"}>{j.akun_lawan_nama}</Data>}
+                  {j.akun_tujuan_nama && <Data label="Ke rekening">{j.akun_tujuan_nama}</Data>}
                   <div className="sm:col-span-2 xl:col-span-4">
                     <Data label="Keterangan">{j.keterangan || "—"}</Data>
                   </div>

@@ -1,9 +1,31 @@
-// Jurnal Umum dan Pencatatan Beban: daftar, rincian, simpan, hapus.
+// Jurnal Umum, Pencatatan Beban, dan Kas & Bank (Penerimaan, Pembayaran, Transfer Bank):
+// daftar, rincian, simpan, hapus.
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/shared/api/client";
 
-export const JALUR = { jurnal_umum: "/jurnal-umum", pencatatan_beban: "/pencatatan-beban" };
-export const NAMA_TIPE = { jurnal_umum: "Jurnal Umum", pencatatan_beban: "Pencatatan Beban", saldo_awal: "Saldo Awal" };
+export const JALUR = {
+  jurnal_umum: "/jurnal-umum",
+  pencatatan_beban: "/pencatatan-beban",
+  penerimaan: "/penerimaan",
+  pembayaran: "/pembayaran",
+  transfer_bank: "/transfer-bank",
+};
+export const NAMA_TIPE = {
+  jurnal_umum: "Jurnal Umum",
+  pencatatan_beban: "Pencatatan Beban",
+  saldo_awal: "Saldo Awal",
+  penerimaan: "Penerimaan",
+  pembayaran: "Pembayaran",
+  transfer_bank: "Transfer Bank",
+};
+/** Alamat menu tiap tipe, untuk tautan ke dokumen asal (Histori Bank). Saldo Awal tidak bertautan. */
+export const ALAMAT_MENU = {
+  jurnal_umum: "/buku-besar/jurnal-umum",
+  pencatatan_beban: "/buku-besar/pencatatan-beban",
+  penerimaan: "/kas-bank/penerimaan",
+  pembayaran: "/kas-bank/pembayaran",
+  transfer_bank: "/kas-bank/transfer-bank",
+};
 export const NAMA_STATUS = { disetujui: "Disetujui", diajukan: "Menunggu persetujuan", ditolak: "Ditolak" };
 
 /** filter: { dari, sampai, status, cari } — nilai kosong tidak dikirim. */

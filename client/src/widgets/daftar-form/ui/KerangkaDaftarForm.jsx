@@ -1,7 +1,10 @@
 // Pola Accurate di dalam satu tab menu: sub-tab "Daftar" lalu satu sub-tab per
 // data yang dibuka ("Pengguna baru", atau nama datanya). Sub-tab yang tidak aktif
 // disembunyikan, bukan dibuang, jadi isian formulirnya tetap ada.
+// Alamat ?buka={id}&judul={nomor} langsung membuka data itu (tautan dari Histori Bank).
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useBuangParameter } from "@/shared/lib/useBuangParameter";
 import { FiList, FiPlus, FiX } from "react-icons/fi";
 import {
   AlertDialog,
@@ -55,6 +58,16 @@ export function KerangkaDaftarForm({ namaData, bisaBuat = false, renderDaftar, r
     setTerbuka((daftar) => daftar.filter((t) => t.kunci !== kunci));
     setAktif((a) => (a === kunci ? "daftar" : a));
   };
+
+  // Tautan dokumen asal (?buka=…&judul=…): buka dokumennya, lalu buang parameternya dari alamat.
+  const [cari] = useSearchParams();
+  const idAlamat = cari.get("buka");
+  const [alamatTerakhir, setAlamatTerakhir] = useState(null);
+  if (idAlamat !== alamatTerakhir) {
+    setAlamatTerakhir(idAlamat);
+    if (idAlamat) buka(idAlamat, cari.get("judul") || "Dokumen");
+  }
+  useBuangParameter(Boolean(idAlamat), ["buka", "judul"]);
 
   const mintaTutup = (t) => (t.berubah ? setMauDitutup(t) : tutupLangsung(t.kunci));
 

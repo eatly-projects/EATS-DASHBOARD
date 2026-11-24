@@ -17,6 +17,7 @@ import { BagianHasilBulan } from "./ui/BagianHasilBulan";
 import { BagianTren } from "./ui/BagianTren";
 import { BagianBiaya } from "./ui/BagianBiaya";
 import { BagianRincian } from "./ui/BagianRincian";
+import { RingkasanKasBank } from "@/widgets/kas-bank/ui/RingkasanKasBank";
 
 function KerangkaMemuat() {
   return (
@@ -89,6 +90,15 @@ function AsalData({ asal, unitKode, periode, unitPerKode, gabunganUnitAda, semua
 }
 
 export function RingkasanPage() {
+  return (
+    <div className="space-y-8">
+      <RingkasanKasBank />
+      <RingkasanLabaRugi />
+    </div>
+  );
+}
+
+function RingkasanLabaRugi() {
   const { ref, isPending: refMemuat, isError: refGalat, error: galatRef, refetch: muatUlangRef } = useReferensi();
   const pilihan = usePilihanLaporan();
   const laporan = useLaporan(pilihan.tahun);

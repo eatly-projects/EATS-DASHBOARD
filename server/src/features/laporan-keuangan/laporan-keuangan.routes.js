@@ -1,12 +1,23 @@
-// Laporan › Laporan Keuangan (dan Buku Besar › Histori Akun): Laba/Rugi, Neraca, Neraca
-// Percobaan, Rincian Buku Besar, Keseluruhan Jurnal, beserta unduhan Excel.
+// Laporan › Laporan Keuangan (dan Buku Besar › Histori Akun, Kas & Bank › Histori Bank):
+// Laba/Rugi, Neraca, Neraca Percobaan, Rincian Buku Besar, Keseluruhan Jurnal, Arus Kas,
+// beserta unduhan Excel; ditambah ringkasan saldo kas & bank untuk halaman utama.
 import { Router } from "express";
 import { z } from "zod";
 import { AppError, bacaBody, galat, kirim } from "../../shared/http.js";
 import { wajibMasuk } from "../../shared/middleware/auth.js";
 import { boleh, muatHak, wajibHak } from "../../shared/akses/hak.js";
 import { skemaTanggal } from "../../shared/tanggal.js";
-import { bukuBesar, infoPerusahaan, labaRugi, neraca, neracaPercobaan, semuaJurnal } from "./laporan-keuangan.service.js";
+import {
+  arusKas,
+  bukuBesar,
+  historiBank,
+  infoPerusahaan,
+  labaRugi,
+  neraca,
+  neracaPercobaan,
+  ringkasanKasBank,
+  semuaJurnal,
+} from "./laporan-keuangan.service.js";
 import { buatExcel } from "./ekspor-excel.js";
 
 export const laporanKeuanganRouter = Router();
@@ -18,6 +29,13 @@ async function hakBukuBesar(req, _res, next) {
   req.hak ??= await muatHak(req.pengguna);
   if (boleh(req.hak, "laporan_keuangan", "lihat") || boleh(req.hak, "histori_akun", "lihat")) return next();
   next(new AppError(403, "TANPA_HAK", "Anda belum diberi hak Lihat di menu Histori Akun atau Laporan Keuangan."));
+}
+
+// Histori Bank juga bisa dibuka dari Laporan Keuangan.
+async function hakHistoriBank(req, _res, next) {
+  req.hak ??= await muatHak(req.pengguna);
+  if (boleh(req.hak, "histori_bank", "lihat") || boleh(req.hak, "laporan_keuangan", "lihat")) return next();
+  next(new AppError(403, "TANPA_HAK", "Anda belum diberi hak Lihat di menu Histori Bank."));
 }
 
 const rentang = z.object({ dari: skemaTanggal("Tanggal awal"), sampai: skemaTanggal("Tanggal akhir") });
@@ -36,6 +54,21 @@ const LAPORAN = {
     hitung: (q) => bukuBesar({ dari: q.dari, sampai: q.sampai, akunId: q.akun_id }),
   },
   jurnal: { hak: hakLaporan, skema: rentang, hitung: (q) => semuaJurnal(q) },
+  "histori-bank": {
+    hak: hakHistoriBank,
+    skema: rentang.extend({ akun_id: z.uuid({ error: "Rekening tidak dikenal." }).optional() }),
+    hitung: (q) => historiBank({ dari: q.dari, sampai: q.sampai, akunId: q.akun_id }),
+  },
+  "arus-kas": {
+    hak: hakLaporan,
+    skema: rentang.extend({ departemen_id: z.uuid({ error: "Lini bisnis tidak dikenal." }).optional() }),
+    hitung: (q) => arusKas({ dari: q.dari, sampai: q.sampai, departemenId: q.departemen_id ?? null }),
+  },
+  "ringkasan-kas-bank": {
+    hak: wajibHak("histori_bank", "lihat"),
+    skema: z.object({ per: skemaTanggal("Tanggal") }),
+    hitung: (q) => ringkasanKasBank({ per: q.per }),
+  },
 };
 
 const laporan = (jenis) => {

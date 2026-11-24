@@ -73,7 +73,7 @@ function keBody(tipe, isian) {
   };
 }
 
-function PitaStatus({ data }) {
+export function PitaStatus({ data }) {
   if (data.status === "diajukan") {
     return (
       <div className="flex items-start gap-3 rounded-xl border border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning))]/10 p-3 text-sm">

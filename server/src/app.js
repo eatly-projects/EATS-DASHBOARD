@@ -22,7 +22,7 @@ import { preferensiRouter } from "./features/preferensi/preferensi.routes.js";
 import { logAktivitasRouter } from "./features/log-aktivitas/log-aktivitas.routes.js";
 import { departemenRouter } from "./features/departemen/departemen.routes.js";
 import { akunRouter } from "./features/akun/akun.routes.js";
-import { jurnalUmumRouter, pencatatanBebanRouter } from "./features/jurnal/jurnal.routes.js";
+import { jurnalUmumRouter, pembayaranRouter, pencatatanBebanRouter, penerimaanRouter, transferBankRouter } from "./features/jurnal/jurnal.routes.js";
 import { penyetujuRouter } from "./features/persetujuan/penyetuju.routes.js";
 import { persetujuanRouter } from "./features/persetujuan/persetujuan.routes.js";
 import { laporanKeuanganRouter } from "./features/laporan-keuangan/laporan-keuangan.routes.js";
@@ -69,6 +69,9 @@ export function buatAplikasi() {
   api.use("/akun", akunRouter);
   api.use("/jurnal-umum", jurnalUmumRouter);
   api.use("/pencatatan-beban", pencatatanBebanRouter);
+  api.use("/penerimaan", penerimaanRouter);
+  api.use("/pembayaran", pembayaranRouter);
+  api.use("/transfer-bank", transferBankRouter);
   api.use("/penyetuju-transaksi", penyetujuRouter);
   api.use("/persetujuan", persetujuanRouter);
   api.use("/laporan-keuangan", laporanKeuanganRouter);

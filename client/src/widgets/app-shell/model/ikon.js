@@ -2,6 +2,10 @@
 // Ikon milik Accurate sengaja tidak ditiru; yang diambil hanya pola warnanya.
 import {
   FiActivity,
+  FiArrowDownCircle,
+  FiArrowUpCircle,
+  FiCreditCard,
+  FiRepeat,
   FiBarChart2,
   FiBookOpen,
   FiBriefcase,
@@ -23,7 +27,7 @@ import {
 } from "react-icons/fi";
 
 /** Ikon modul: dipakai judul kelompok di matriks Akses Grup. */
-export const IKON_MODUL = { pengaturan: FiSettings, perusahaan: FiBriefcase, buku_besar: FiBookOpen, laporan: FiPieChart };
+export const IKON_MODUL = { pengaturan: FiSettings, perusahaan: FiBriefcase, buku_besar: FiBookOpen, kas_bank: FiCreditCard, laporan: FiPieChart };
 
 export const ikonModul = (kode) => IKON_MODUL[kode] ?? FiFile;
 
@@ -40,6 +44,10 @@ export const IKON_MENU = {
   jurnal_umum: FiEdit3,
   pencatatan_beban: FiFileText,
   histori_akun: FiClock,
+  penerimaan: FiArrowDownCircle,
+  pembayaran: FiArrowUpCircle,
+  transfer_bank: FiRepeat,
+  histori_bank: FiClock,
   ringkasan_laba_rugi: FiBarChart2,
   laporan_keuangan: FiPieChart,
   unggah_laporan: FiUploadCloud,
@@ -63,6 +71,10 @@ export const KETERANGAN_MENU = {
   jurnal_umum: "Catat transaksi apa pun dengan debit dan kredit yang seimbang",
   pencatatan_beban: "Catat beban yang belum dibayar sebagai utang beban; dibayar nanti lewat Kas & Bank",
   histori_akun: "Semua transaksi satu akun dalam rentang tanggal, beserta saldo berjalannya",
+  penerimaan: "Catat uang masuk ke rekening atau kas, misalnya setoran modal atau pendapatan lain",
+  pembayaran: "Catat uang keluar dari rekening atau kas, misalnya bayar listrik, gaji, atau melunasi utang beban",
+  transfer_bank: "Pindahkan uang antar-rekening, misalnya mengisi kas kecil dari BCA",
+  histori_bank: "Semua uang masuk dan keluar satu rekening, beserta saldo berjalannya",
   laporan_keuangan: "Neraca, Laba Rugi, Neraca Percobaan, Buku Besar, dan Jurnal; bisa diunduh Excel atau dicetak",
 };
 

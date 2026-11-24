@@ -20,9 +20,19 @@ const PILIHAN_STATUS = [
   { nilai: "nonaktif", label: "Nonaktif" },
 ];
 
+/** "BCA •••• 1234" untuk rekening yang keterangan banknya terisi, atau null. */
+export const keteranganRekening = (a) =>
+  a.tipe === "kas_bank" && (a.bank_nama || a.nomor_rekening_akhir) ? [a.bank_nama, a.nomor_rekening_akhir && `•••• ${a.nomor_rekening_akhir}`].filter(Boolean).join(" ") : null;
+
+const LencanaUtama = () => (
+  <span className="ml-2 rounded-full bg-[hsl(var(--accent))] px-2 py-0.5 text-xs font-medium text-[hsl(var(--accent-foreground))]">Rekening utama</span>
+);
+
 const NamaAkun = ({ a, menjorok }) => (
   <span className={cn("block", a.punya_anak ? "font-semibold text-foreground" : "text-foreground")} style={{ paddingLeft: menjorok ? `${a.tingkat * 1.25}rem` : 0 }}>
     {a.nama}
+    {keteranganRekening(a) && <span className="ml-2 text-xs font-normal text-muted-foreground">{keteranganRekening(a)}</span>}
+    {a.rekening_utama && <LencanaUtama />}
     {a.nonaktif && <span className="ml-2 text-xs font-normal text-muted-foreground">(nonaktif)</span>}
   </span>
 );
@@ -80,6 +90,8 @@ function DaftarAkun({ buka }) {
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               {a.tipe_nama}
+              {keteranganRekening(a) && <span>{keteranganRekening(a)}</span>}
+              {a.rekening_utama && <LencanaUtama />}
               {a.nonaktif && <LencanaStatus aktif={false} />}
             </div>
           </div>

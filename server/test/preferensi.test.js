@@ -5,9 +5,10 @@ import { kueri, pool } from "../src/shared/db/pool.js";
 import { pastikanTanggalTerbuka } from "../src/features/preferensi/periode.js";
 import { buatPenggunaUji, jalankanAplikasi, masuk, panggil, selesai } from "./bantu.js";
 
-let app, admin, cookieAdmin, cookieOperator, asli;
+let app, admin, cookieAdmin, cookieOperator, asli, rekeningAsli;
 before(async () => {
   ({ rows: [asli] } = await kueri("select nama, alamat, telepon, email, npwp, mulai_periode, kunci_sampai from perusahaan"));
+  ({ rows: [{ id: rekeningAsli }] } = await kueri("select akun_rekening_utama_id as id from perusahaan"));
   admin = await buatPenggunaUji({ peran: "admin" });
   const operator = await buatPenggunaUji({ peran: "staf" });
   app = await jalankanAplikasi();
@@ -24,6 +25,7 @@ after(async () => {
     asli.mulai_periode,
     asli.kunci_sampai,
   ]);
+  await kueri("update perusahaan set akun_rekening_utama_id = $1", [rekeningAsli]);
   await app.tutup();
   await selesai();
 });
@@ -62,4 +64,31 @@ test("saldo awal (sehari sebelum periode) boleh, kecuali periodenya sudah dikunc
   await assert.rejects(() => pastikanTanggalTerbuka(pool, "2026-12-31"), /sebelum periode akuntansi dimulai/);
   await kueri("update perusahaan set kunci_sampai = '2026-12-31'");
   await assert.rejects(() => pastikanTanggalTerbuka(pool, "2026-12-31", { saldoAwal: true }), /sudah dikunci/);
+});
+
+test("rekening utama harus akun Kas & Bank; perubahannya tercatat di log", async () => {
+  await kueri("update perusahaan set kunci_sampai = null");
+  const pref = (await panggil(app.url, cookieAdmin, "GET", "/preferensi")).body.data;
+  const beban = (await kueri("select id from akun where kode = '600005'")).rows[0].id;
+  const salah = await panggil(app.url, cookieAdmin, "PUT", "/preferensi", { ...pref, akun_rekening_utama_id: beban });
+  assert.equal(salah.status, 400, JSON.stringify(salah.body));
+  assert.match(salah.body.error.message, /Kas & Bank/);
+  const { rows: bank } = await kueri("insert into akun (kode, nama, tipe, bank_nama) values ('UJI-PREF-BANK', 'UJI Bank Preferensi', 'kas_bank', 'BNI') returning id");
+  const r = await panggil(app.url, cookieAdmin, "PUT", "/preferensi", { ...pref, akun_rekening_utama_id: bank[0].id });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.match(r.body.data.akun_rekening_utama_nama, /UJI-PREF-BANK/);
+  const { rows } = await kueri(
+    "select sesudah from log_aktivitas where menu_kode = 'preferensi' and pengguna_email = $1 order by id desc limit 1",
+    [admin.email],
+  );
+  assert.match(rows[0].sesudah["Rekening utama"], /UJI-PREF-BANK/);
+  await kueri("update perusahaan set akun_rekening_utama_id = $1", [rekeningAsli]);
+});
+
+test("rekening utama yang dikirim kosong (null) dianggap tidak berubah", async () => {
+  await kueri("update perusahaan set kunci_sampai = null");
+  const pref = (await panggil(app.url, cookieAdmin, "GET", "/preferensi")).body.data;
+  const r = await panggil(app.url, cookieAdmin, "PUT", "/preferensi", { ...pref, akun_rekening_utama_id: null });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.data.akun_rekening_utama_id, pref.akun_rekening_utama_id);
 });

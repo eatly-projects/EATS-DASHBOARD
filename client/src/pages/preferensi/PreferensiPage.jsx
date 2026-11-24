@@ -181,6 +181,20 @@ export function PreferensiPage() {
                   onChange={(a) => ubah({ akun_laba_ditahan_id: a.id, akun_laba_ditahan_nama: `${a.kode} ${a.nama}` })}
                 />
               </Kolom>
+              <Kolom
+                label="Rekening utama"
+                htmlFor="pref-rekening"
+                petunjuk="Pembayaran lama dari aplikasi Operasional yang tidak punya rekening tujuan masuk ke rekening ini. Histori Bank juga dibuka di rekening ini."
+              >
+                <PilihAkun
+                  id="pref-rekening"
+                  tipe={["kas_bank"]}
+                  value={isian.akun_rekening_utama_id}
+                  label={isian.akun_rekening_utama_nama}
+                  placeholder="Pilih rekening"
+                  onChange={(a) => ubah({ akun_rekening_utama_id: a.id, akun_rekening_utama_nama: `${a.kode} ${a.nama}` })}
+                />
+              </Kolom>
             </div>
           ),
         },

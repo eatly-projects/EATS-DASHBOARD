@@ -155,3 +155,57 @@ test("Preferensi: akun Ekuitas Saldo Awal harus bertipe Modal", async () => {
   assert.equal(r.status, 400);
   assert.match(r.body.error.message, /Modal/);
 });
+
+// ── Rekening (Tahap 2a) ──────────────────────────────────────────────────
+let bank1;
+
+test("akun Kas & Bank menyimpan nama bank dan 4 angka terakhir nomor rekening", async () => {
+  const r = await buat({ kode: "UJI-BANK1", nama: "UJI Bank Mandiri", tipe: "kas_bank", bank_nama: "Mandiri", nomor_rekening_akhir: "1234" });
+  assert.equal(r.status, 201, JSON.stringify(r.body));
+  assert.equal(r.body.data.bank_nama, "Mandiri");
+  assert.equal(r.body.data.nomor_rekening_akhir, "1234");
+  assert.equal(r.body.data.rekening_utama, false);
+  bank1 = r.body.data;
+  const salah = await buat({ kode: "UJI-BANK9", nama: "UJI Bank Salah", tipe: "kas_bank", nomor_rekening_akhir: "12345" });
+  assert.equal(salah.status, 400);
+  assert.match(salah.body.error.message, /4 angka terakhir/);
+});
+
+test("akun selain Kas & Bank selalu disimpan tanpa nama bank", async () => {
+  const r = await buat({ kode: "UJI-BEBAN1", nama: "UJI Beban Bank", tipe: "beban", bank_nama: "BCA", nomor_rekening_akhir: "9999" });
+  assert.equal(r.status, 201, JSON.stringify(r.body));
+  assert.equal(r.body.data.bank_nama, "");
+  assert.equal(r.body.data.nomor_rekening_akhir, "");
+});
+
+test("rekening utama tidak bisa dinonaktifkan, dihapus, atau diganti tipenya", async () => {
+  const { rows: [{ id: utamaAsli }] } = await kueri("select akun_rekening_utama_id as id from perusahaan");
+  await kueri("update perusahaan set akun_rekening_utama_id = $1", [bank1.id]);
+  try {
+    const isi = { kode: bank1.kode, nama: bank1.nama, tipe: "kas_bank", induk_id: null, catatan: "", saldo_awal: "0", bank_nama: "Mandiri", nomor_rekening_akhir: "1234" };
+    assert.equal((await api("GET", `/akun/${bank1.id}`)).body.data.rekening_utama, true);
+    const nonaktif = await api("PUT", `/akun/${bank1.id}`, { ...isi, nonaktif: true });
+    assert.equal(nonaktif.status, 409, JSON.stringify(nonaktif.body));
+    assert.match(nonaktif.body.error.message, /Rekening utama/);
+    const tipe = await api("PUT", `/akun/${bank1.id}`, { ...isi, tipe: "beban", nonaktif: false });
+    assert.equal(tipe.status, 409, JSON.stringify(tipe.body));
+    assert.match(tipe.body.error.message, /Rekening utama/);
+    const hapus = await api("DELETE", `/akun/${bank1.id}`);
+    assert.equal(hapus.status, 409);
+    assert.match(hapus.body.error.message, /Rekening utama/);
+  } finally {
+    await kueri("update perusahaan set akun_rekening_utama_id = $1", [utamaAsli]);
+  }
+});
+
+test("akun yang dipasang di Preferensi (rekening utama) tidak bisa dijadikan induk", async () => {
+  const { rows: [{ id: utamaAsli }] } = await kueri("select akun_rekening_utama_id as id from perusahaan");
+  await kueri("update perusahaan set akun_rekening_utama_id = $1", [bank1.id]);
+  try {
+    const r = await buat({ kode: "UJI-BANK1-1", nama: "UJI Sub Bank", tipe: "kas_bank", induk_id: bank1.id });
+    assert.equal(r.status, 409, JSON.stringify(r.body));
+    assert.match(r.body.error.message, /Rekening utama/);
+  } finally {
+    await kueri("update perusahaan set akun_rekening_utama_id = $1", [utamaAsli]);
+  }
+});

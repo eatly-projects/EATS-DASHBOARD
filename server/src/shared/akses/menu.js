@@ -51,6 +51,16 @@ export const MODUL = [
     ],
   },
   {
+    kode: "kas_bank",
+    nama: "Kas & Bank",
+    menu: [
+      { kode: "penerimaan", nama: "Penerimaan", jenis: "transaksi", path: "/kas-bank/penerimaan" },
+      { kode: "pembayaran", nama: "Pembayaran", jenis: "transaksi", path: "/kas-bank/pembayaran" },
+      { kode: "transfer_bank", nama: "Transfer Bank", jenis: "transaksi", path: "/kas-bank/transfer-bank" },
+      { kode: "histori_bank", nama: "Histori Bank", jenis: "laporan", path: "/kas-bank/histori-bank", aksi: ["lihat"] },
+    ],
+  },
+  {
     kode: "laporan",
     nama: "Laporan",
     menu: [

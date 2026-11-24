@@ -1,14 +1,16 @@
 // Laporan > Laporan Keuangan: daftar laporan ala Accurate ("Daftar Laporan"), lalu
 // pilih rentang tanggal, lalu hasilnya langsung tampil dan bisa diunduh atau dicetak.
 import { useState } from "react";
-import { FiArrowLeft, FiBookOpen, FiColumns, FiFileText, FiGrid, FiLayers, FiList } from "react-icons/fi";
+import { FiArrowLeft, FiBookOpen, FiColumns, FiFileText, FiGrid, FiLayers, FiList, FiTrendingUp } from "react-icons/fi";
 import { ErrorState, TableSkeleton } from "@/shared/ui/bits";
 import { Button } from "@/shared/ui/button";
+import { Label } from "@/shared/ui/label";
+import { PilihDepartemen } from "@/features/pilih-departemen/ui/PilihDepartemen";
 import { cn } from "@/shared/lib/cn";
 import { hariIni, rentangPeriode } from "@/shared/lib/rentang";
 import { useLaporan } from "@/entities/laporan-keuangan";
 import { KepalaLaporan, PilihPerTanggal, PilihRentang } from "./ui/ParameterLaporan";
-import { BukuBesar, DaftarJurnalLaporan, LabaRugi, Neraca, NeracaPercobaan } from "./ui/TampilanLaporan";
+import { ArusKas, BukuBesar, DaftarJurnalLaporan, LabaRugi, Neraca, NeracaPercobaan } from "./ui/TampilanLaporan";
 
 const DAFTAR = [
   { kunci: "laba-rugi", jenis: "laba-rugi", nama: "Laba/Rugi", ket: "Pendapatan, beban, dan laba bersih dalam satu rentang tanggal.", ikon: FiFileText },
@@ -24,14 +26,32 @@ const DAFTAR = [
   { kunci: "neraca-percobaan", jenis: "neraca-percobaan", nama: "Neraca Percobaan", ket: "Saldo awal, mutasi debit dan kredit, serta saldo akhir setiap akun.", ikon: FiGrid },
   { kunci: "buku-besar", jenis: "buku-besar", nama: "Rincian Buku Besar", ket: "Semua transaksi per akun beserta saldo berjalannya.", ikon: FiBookOpen },
   { kunci: "jurnal", jenis: "jurnal", nama: "Keseluruhan Jurnal", ket: "Semua jurnal yang disetujui beserta rinciannya.", ikon: FiList },
+  {
+    kunci: "arus-kas",
+    jenis: "arus-kas",
+    nama: "Arus Kas",
+    ket: "Uang masuk dan keluar per bulan, dikelompokkan per aktivitas.",
+    ikon: FiTrendingUp,
+    lini: true,
+  },
 ];
 
-const TAMPILAN = { "laba-rugi": LabaRugi, neraca: Neraca, "neraca-percobaan": NeracaPercobaan, "buku-besar": BukuBesar, jurnal: DaftarJurnalLaporan };
+const TAMPILAN = {
+  "laba-rugi": LabaRugi,
+  neraca: Neraca,
+  "neraca-percobaan": NeracaPercobaan,
+  "buku-besar": BukuBesar,
+  jurnal: DaftarJurnalLaporan,
+  "arus-kas": ArusKas,
+};
 
 function HasilLaporan({ pilihan }) {
   const [rentang, setRentang] = useState(() => rentangPeriode("bulan_ini"));
   const [per, setPer] = useState(hariIni());
-  const params = pilihan.perTanggal ? { per } : { ...rentang, ...(pilihan.tambahan ?? {}) };
+  const [departemen, setDepartemen] = useState(null);
+  const params = pilihan.perTanggal
+    ? { per }
+    : { ...rentang, ...(pilihan.tambahan ?? {}), ...(pilihan.lini && departemen ? { departemen_id: departemen } : {}) };
   const sah = pilihan.perTanggal ? Boolean(per) : Boolean(rentang.dari && rentang.sampai && rentang.dari <= rentang.sampai);
   const q = useLaporan(pilihan.jenis, params, sah);
   const Tampilan = TAMPILAN[pilihan.jenis];
@@ -40,6 +60,12 @@ function HasilLaporan({ pilihan }) {
     <div className="space-y-4">
       <section className="rounded-2xl border border-border bg-card p-4 shadow-card print:hidden sm:p-5" aria-label="Pilih periode">
         {pilihan.perTanggal ? <PilihPerTanggal nilai={per} onUbah={setPer} idAwal={pilihan.kunci} /> : <PilihRentang nilai={rentang} onUbah={setRentang} idAwal={pilihan.kunci} />}
+        {pilihan.lini && (
+          <div className="mt-4 max-w-xs space-y-1.5">
+            <Label htmlFor={`${pilihan.kunci}-lini`}>Lini bisnis</Label>
+            <PilihDepartemen id={`${pilihan.kunci}-lini`} value={departemen} onChange={setDepartemen} labelKosong="Semua lini bisnis" />
+          </div>
+        )}
       </section>
       <section className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-card print:border-0 print:p-0 print:shadow-none sm:p-5" aria-label={pilihan.nama}>
         {q.isError ? (

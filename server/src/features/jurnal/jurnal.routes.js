@@ -1,5 +1,6 @@
-// Rute Jurnal Umum (/jurnal-umum) dan Pencatatan Beban (/pencatatan-beban). Keduanya
-// memakai modul jurnal bersama; hak akses mengikuti menu masing-masing.
+// Rute Jurnal Umum (/jurnal-umum), Pencatatan Beban (/pencatatan-beban), dan Kas & Bank
+// (/penerimaan, /pembayaran, /transfer-bank). Semuanya memakai modul jurnal bersama; hak
+// akses mengikuti menu masing-masing.
 import { Router } from "express";
 import { z } from "zod";
 import { bacaBody, kirim } from "../../shared/http.js";
@@ -18,6 +19,27 @@ const umum = {
   keterangan: z.string().trim().max(500, "Keterangan paling panjang 500 karakter.").default(""),
   penomoran_id: idOpsional("Penomoran tidak dikenal.").optional(),
 };
+
+// Rincian bernilai (Pencatatan Beban, Penerimaan, Pembayaran): akun, nilai, departemen, catatan.
+const rincianNilai = (labelAkun, labelNilai, pesanKosong) =>
+  z
+    .array(
+      z.object({
+        akun_id: z.uuid({ error: labelAkun }),
+        nilai: skemaUang({ label: labelNilai }),
+        departemen_id: idOpsional("Departemen tidak dikenal."),
+        catatan: z.string().trim().max(300, "Catatan baris paling panjang 300 karakter.").default(""),
+      }),
+      { error: pesanKosong },
+    )
+    .min(1, pesanKosong)
+    .max(200, "Rincian paling banyak 200 baris.");
+
+const kasBank = z.object({
+  ...umum,
+  akun_lawan_id: z.uuid({ error: "Pilih rekening." }),
+  baris: rincianNilai("Setiap baris harus punya akun.", "Nilai", "Isi paling sedikit satu rincian."),
+});
 
 const SKEMA = {
   jurnal_umum: z.object({
@@ -53,6 +75,14 @@ const SKEMA = {
       .min(1, "Isi paling sedikit satu rincian beban.")
       .max(200, "Rincian paling banyak 200 baris."),
   }),
+  penerimaan: kasBank,
+  pembayaran: kasBank,
+  transfer_bank: z.object({
+    ...umum,
+    akun_lawan_id: z.uuid({ error: "Pilih rekening asal." }),
+    akun_tujuan_id: z.uuid({ error: "Pilih rekening tujuan." }),
+    nilai: skemaUang({ label: "Nilai transfer" }),
+  }),
 };
 
 const skemaDaftar = z.object({
@@ -76,3 +106,6 @@ function buatRouter(tipe) {
 
 export const jurnalUmumRouter = buatRouter("jurnal_umum");
 export const pencatatanBebanRouter = buatRouter("pencatatan_beban");
+export const penerimaanRouter = buatRouter("penerimaan");
+export const pembayaranRouter = buatRouter("pembayaran");
+export const transferBankRouter = buatRouter("transfer_bank");

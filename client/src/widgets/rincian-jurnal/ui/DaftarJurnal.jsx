@@ -1,5 +1,5 @@
-// Daftar transaksi pembukuan (Jurnal Umum / Pencatatan Beban): filter periode dan
-// status, cari nomor atau keterangan, muat 50 per halaman.
+// Daftar transaksi pembukuan (Jurnal Umum, Pencatatan Beban, Penerimaan, Pembayaran,
+// Transfer Bank): filter periode dan status, cari nomor atau keterangan, muat 50 per halaman.
 import { useState } from "react";
 import { DaftarData } from "@/widgets/daftar-form/ui/DaftarData";
 import { ChipFilter } from "@/widgets/daftar-form/ui/ChipFilter";
@@ -18,6 +18,24 @@ const PILIHAN_STATUS = [
   { nilai: "ditolak", label: "Ditolak" },
 ];
 
+// Kolom akun kepala per tipe: Hutang Beban atau rekening.
+const KOLOM_KEPALA = {
+  pencatatan_beban: [{ kunci: "akun_lawan_nama", judul: "Hutang beban" }],
+  penerimaan: [{ kunci: "akun_lawan_nama", judul: "Setor ke" }],
+  pembayaran: [{ kunci: "akun_lawan_nama", judul: "Bayar dari" }],
+  transfer_bank: [
+    { kunci: "akun_lawan_nama", judul: "Dari rekening" },
+    { kunci: "akun_tujuan_nama", judul: "Ke rekening" },
+  ],
+};
+const KOSONG = {
+  jurnal_umum: "Belum ada jurnal umum",
+  pencatatan_beban: "Belum ada pencatatan beban",
+  penerimaan: "Belum ada penerimaan",
+  pembayaran: "Belum ada pembayaran",
+  transfer_bank: "Belum ada transfer bank",
+};
+
 const Nomor = ({ j }) => (j.nomor ? <span className="font-medium tabular-nums text-foreground">{j.nomor}</span> : <span className="text-muted-foreground">Belum bernomor</span>);
 
 export function DaftarJurnal({ tipe, buka }) {
@@ -27,14 +45,14 @@ export function DaftarJurnal({ tipe, buka }) {
   const cariTertunda = useTertunda(cari.trim());
   const q = useDaftarJurnal(tipe, { ...rentangPeriode(periode), status: status === SEMUA ? "" : status, cari: cariTertunda });
   const baris = q.data?.pages.flatMap((p) => p.baris) ?? [];
-  const beban = tipe === "pencatatan_beban";
+  const kepala = KOLOM_KEPALA[tipe] ?? [];
   const adaFilter = periode !== SEMUA || status !== SEMUA || cariTertunda;
   const judul = (j) => j.nomor ?? `${tanggal(j.tanggal)} (menunggu)`;
 
   const kolom = [
     { kunci: "nomor", judul: "Nomor", render: (j) => <Nomor j={j} /> },
     { kunci: "tanggal", judul: "Tanggal", render: (j) => <span className="whitespace-nowrap">{tanggal(j.tanggal)}</span> },
-    ...(beban ? [{ kunci: "akun_lawan_nama", judul: "Hutang beban" }] : []),
+    ...kepala.map((k) => ({ ...k, render: (j) => j[k.kunci] || "—" })),
     { kunci: "keterangan", judul: "Keterangan", render: (j) => j.keterangan || "—" },
     { kunci: "total", judul: "Total", rata: "kanan", render: (j) => <span className="whitespace-nowrap">{formatRupiah(j.total)}</span> },
     { kunci: "status", judul: "Status", render: (j) => <LencanaStatusJurnal status={j.status} /> },
@@ -66,7 +84,7 @@ export function DaftarJurnal({ tipe, buka }) {
       kosong={
         adaFilter
           ? { judul: "Tidak ada transaksi yang cocok" }
-          : { judul: beban ? "Belum ada pencatatan beban" : "Belum ada jurnal umum", keterangan: "Tekan tombol Tambah di kanan atas untuk mencatat yang pertama." }
+          : { judul: KOSONG[tipe], keterangan: "Tekan tombol Tambah di kanan atas untuk mencatat yang pertama." }
       }
       kartuHp={(j) => (
         <div className="space-y-1">
@@ -75,6 +93,9 @@ export function DaftarJurnal({ tipe, buka }) {
             <span className="whitespace-nowrap font-semibold tabular-nums">{formatRupiah(j.total)}</span>
           </div>
           <p className="text-sm text-muted-foreground">{tanggal(j.tanggal)}{j.keterangan ? ` · ${j.keterangan}` : ""}</p>
+          {kepala.length > 0 && (
+            <p className="text-sm text-muted-foreground">{kepala.map((k) => `${k.judul}: ${j[k.kunci] || "—"}`).join(", ")}</p>
+          )}
           <LencanaStatusJurnal status={j.status} />
         </div>
       )}

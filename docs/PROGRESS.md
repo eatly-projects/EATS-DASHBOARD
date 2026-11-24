@@ -2,6 +2,73 @@
 
 > Catatan kronologis. Yang terbaru di atas.
 
+## 2026-11-24 — Tahap 2a: Kas & Bank dasar (branch `tahap-2a-kas-bank`, belum di-commit)
+
+Rancangan Tahap 2 dan 3 disetujui Lutfi 2026-11-24 ("rancangan Tahap 2 dan 3 disetujui, dengan perbaikan dari sesi
+Operasional"): `docs/superpowers/specs/2026-11-24-kas-bank-dan-sambungan-operasional-design.md`. Ini langkah 1 dari
+urutan §6. Rencana kerjanya ada di `docs/superpowers/plans/2026-11-24-tahap-2a-kas-bank-dasar.md` dan dikerjakan
+dengan cara Native (pilihan Lutfi).
+
+**Migrasi `005_kas_bank.sql` baru terpasang di `finance_uji`.** Schema lain tidak berubah. Pemasangan ke `finance`
+menunggu izin Lutfi.
+
+- **Rekening:**
+  - Akun bertipe Kas & Bank punya kolom "Nama bank" dan "Nomor rekening, 4 angka terakhir".
+  - Rekening utama diatur di Preferensi. Bawaannya 110102 Bank (BCA). Rekening utama tidak bisa dinonaktifkan,
+    dihapus, atau diganti tipenya.
+  - Kas kecil memakai akun 110101 Kas yang sudah ada.
+- **Penerimaan** (nomor `BM.`), **Pembayaran** (`BK.`), dan **Transfer Bank** (`TB.`) di modul baru Kas & Bank:
+  - Penerimaan: debit rekening, kredit setiap rincian. Pembayaran sebaliknya. Transfer: debit tujuan, kredit asal.
+  - Mengikuti Penomoran, Penyetuju Transaksi, kunci periode, dan Log Aktivitas seperti transaksi lain.
+  - Rincian menolak akun Kas & Bank (diarahkan ke Transfer Bank), serta Piutang Usaha, Utang Usaha, dan Persediaan.
+    Pesannya "Transaksi ini dicatat di aplikasi Operasional", dan formulirnya punya tombol "Buka aplikasi
+    Operasional".
+- **Histori Bank:**
+  - Saldo awal, saldo berjalan, dan saldo akhir satu rekening. Tanpa pilihan, rekening utama yang dipakai.
+  - Nomor setiap baris membuka dokumen asalnya lewat alamat `?buka=…&judul=…`, yang sekarang dikenali semua halaman
+    daftar.
+- **Arus Kas** (metode langsung) di Laporan Keuangan:
+  - Satu kolom per bulan (paling banyak 12), dikelompokkan ke Operasi, Investasi, dan Pendanaan.
+  - Ada saringan per lini bisnis, unduhan Excel, dan cek "saldo awal + kenaikan = saldo akhir".
+- **Halaman utama:** kartu Kas & Bank berisi saldo setiap rekening hari ini (tanpa transaksi ditulis "—") dan uang
+  masuk/keluar bulan berjalan. Hanya tampil untuk yang punya hak Histori Bank.
+
+**Diverifikasi:**
+- `npm run uji`: 148 tes lulus (sebelumnya 118). Tes baru: `migrasi-005`, `kas-bank`, dan `kas-bank-laporan`;
+  `akun` dan `preferensi` diperluas.
+- Tinjauan akhir oleh pemeriksa terpisah: tidak ada masalah kritis. Enam temuan sudah diperbaiki, masing-masing
+  dengan tes yang gagal dulu:
+  - Arus Kas memberi peringatan palsu kalau rentangnya memuat saldo awal 31 Desember;
+  - tautan nomor di Histori Bank hanya bisa dipakai sekali (diperbaiki dan dibuktikan di browser);
+  - pengguna yang hanya punya hak Histori Bank bisa melihat saldo semua akun lewat API;
+  - kartu "Bulan ini" menulis Rp 0 sebelum buku dimulai, sekarang "—";
+  - rekening utama bisa dijadikan akun induk;
+  - Preferensi menolak semua simpan kalau rekening utama kosong.
+- `npm run build` client berhasil.
+- Di dev server lokal (4910/5178), dengan akun uji sekali pakai yang sudah dihapus:
+  - Penerimaan diisi dan disimpan lewat layar, dengan nomor BM.2027.01.00001 dan toast;
+  - pilihan akun rincian tidak memuat Kas & Bank, Piutang, Utang Usaha, atau Persediaan;
+  - Histori Bank: saldo berjalan benar, dan tautan nomor membuka dokumen di tab Pembayaran;
+  - Arus Kas tiga bulan dengan dan tanpa saringan Maklon;
+  - kartu saldo, kolom bank di formulir akun, dan pilihan rekening utama di Preferensi;
+  - 16 halaman di lebar 390 dan 820 px tidak ada yang melebar ke samping. Ini diukur dengan skrip.
+
+**Belum diverifikasi:**
+- Tampilan formulir dilihat langsung di HP dan tablet. Tangkapan layar alat browser selalu gagal selama ada formulir
+  terbuka, termasuk formulir Pencatatan Beban lama, jadi ini masalah alat, bukan kode baru.
+- HP sungguhan dan Vercel.
+
+**Kekurangan kecil yang ditunda:**
+- Pesan "Isi paling sedikit satu rincian beban." juga muncul di formulir Penerimaan dan Pembayaran.
+- Nomor di Histori Bank tetap bertautan walau pengguna tidak punya hak membuka menu tujuannya.
+- Pilihan rekening di Histori Bank tidak menampilkan nama rekening nonaktif yang dibuka dari kartu saldo.
+- Arus Kas yang disaring per lini bisnis tetap menampilkan baris Kenaikan/Penurunan. Rencana kerja bilang disembunyikan,
+  tapi baris ini berguna.
+- Keterangan menu Laporan Keuangan belum menyebut Arus Kas; Excel menulis "Kenaikan/Penurunan", layar "Kenaikan atau
+  Penurunan".
+- Tes kesinambungan saldo antar-bulan untuk semua kasus, dan Transfer dari rekening nonaktif.
+- Daftar API di `docs/PLANNING.md` §6 belum memuat rute Tahap 1 maupun 2a.
+
 ## 2026-11-20 — Tahap 1: Buku Besar dan laporan inti (di-push ke `main`)
 
 Arahan Lutfi: "lanjut kerjakan, ingat ya seperti accurate". Rencana kerja ada di

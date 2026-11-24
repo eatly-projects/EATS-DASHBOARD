@@ -2,6 +2,7 @@
 // sederhana (kolom + baris), lalu ditulis dengan judul, nama perusahaan, dan periode.
 import ExcelJS from "exceljs";
 import { tanggalPanjang } from "../../shared/format.js";
+import { galat } from "../../shared/http.js";
 
 const FORMAT_UANG = '#,##0.00;-#,##0.00;"—"';
 
@@ -99,17 +100,38 @@ function tabelJurnal(d) {
   return { kolom, baris };
 }
 
+function tabelArusKas(d) {
+  const kolom = [{ judul: "Kode", lebar: 12 }, { judul: "Akun", lebar: 40 }, ...d.kolom.map((k) => ({ judul: k.nama, lebar: 18, uang: true }))];
+  const nilai = (n) => d.kolom.map((k) => uang(n[k.kunci]));
+  const baris = [];
+  for (const b of d.bagian) {
+    baris.push({ sel: ["", b.judul], tebal: true });
+    for (const r of b.baris) baris.push({ sel: [r.kode, r.nama, ...nilai(r.nilai)], menjorok: 1 });
+    baris.push({ sel: ["", b.judul_total, ...nilai(b.total)], tebal: true });
+  }
+  baris.push({ sel: ["", "Kenaikan/Penurunan Kas Bersih", ...nilai(d.kenaikan)], tebal: true });
+  if (d.saldo_awal) {
+    baris.push({ sel: ["", "Saldo Kas Awal", ...nilai(d.saldo_awal)] });
+    baris.push({ sel: ["", "Saldo Kas Akhir", ...nilai(d.saldo_akhir)], tebal: true });
+  }
+  return { kolom, baris };
+}
+
 const PENYUSUN = {
   "laba-rugi": tabelLabaRugi,
   neraca: tabelNeraca,
   "neraca-percobaan": tabelNeracaPercobaan,
   "buku-besar": tabelBukuBesar,
   jurnal: tabelJurnal,
+  "histori-bank": tabelBukuBesar,
+  "arus-kas": tabelArusKas,
 };
 
 /** Mengembalikan { berkas: Buffer, nama: "Laba Rugi 1 Maret 2031 sampai 31 Maret 2031.xlsx" }. */
 export async function buatExcel(jenis, data, namaPerusahaan) {
-  const { kolom, baris } = PENYUSUN[jenis](data);
+  const penyusun = PENYUSUN[jenis];
+  if (!penyusun) throw galat.tidakAda("Laporan ini tidak bisa diunduh.");
+  const { kolom, baris } = penyusun(data);
   const wb = new ExcelJS.Workbook();
   wb.creator = "EATS Dashboard";
   const ws = wb.addWorksheet(data.judul.slice(0, 31).replace(/[\\/*?:[\]]/g, "-"));

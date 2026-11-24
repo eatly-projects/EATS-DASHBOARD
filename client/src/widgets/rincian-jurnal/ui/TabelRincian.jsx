@@ -67,7 +67,7 @@ function Label({ children, htmlFor }) {
   );
 }
 
-export function TabelRincian({ mode = "jurnal", baris, onUbah, disabled = false, tipeAkun, idForm }) {
+export function TabelRincian({ mode = "jurnal", baris, onUbah, disabled = false, tipeAkun, idForm, labelTotal = "Total beban" }) {
   const ubahBaris = (kunci, bagian) => onUbah(baris.map((b) => (b.kunci === kunci ? { ...b, ...bagian } : b)));
   const hapusBaris = (kunci) => onUbah(baris.length > 1 ? baris.filter((b) => b.kunci !== kunci) : [barisKosong()]);
   const total = totalRincian(mode, baris);
@@ -215,7 +215,7 @@ export function TabelRincian({ mode = "jurnal", baris, onUbah, disabled = false,
           </>
         ) : (
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Total beban</dt>
+            <dt className="text-muted-foreground">{labelTotal}</dt>
             <dd className="font-semibold tabular-nums">{formatRupiah(total.debit)}</dd>
           </div>
         )}

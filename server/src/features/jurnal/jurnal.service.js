@@ -1,5 +1,9 @@
-// Modul jurnal bersama untuk Jurnal Umum dan Pencatatan Beban. Satu dokumen = satu
-// baris `jurnal` + rinciannya di `jurnal_baris`; semua laporan dihitung dari sini.
+// Modul jurnal bersama untuk Jurnal Umum, Pencatatan Beban, dan Kas & Bank (Penerimaan,
+// Pembayaran, Transfer Bank). Satu dokumen = satu baris `jurnal` + rinciannya di
+// `jurnal_baris`; semua laporan dihitung dari sini.
+//
+// Pencatatan Beban dan Kas & Bank menyimpan akun kepala (Hutang Beban / rekening) di
+// `akun_lawan_id` dan menulis baris akun itu otomatis (`otomatis = true`).
 //
 // Urutan di dalam satu transaksi database:
 //   periksa isian → periksa akun & departemen → periksa seimbang (dalam sen) →
@@ -11,13 +15,27 @@ import { catatLog } from "../../shared/log/log.js";
 import { tanggalPanjang } from "../../shared/format.js";
 import { dariSen, keSen, rupiahTeks } from "../../shared/uang.js";
 import { pastikanId } from "../akses-grup/akses-grup.service.js";
+import { namaTipeAkun } from "../akun/tipe-akun.js";
 import { pastikanTanggalTerbuka } from "../preferensi/periode.js";
 import { ambilNomorBerikut } from "../penomoran/penomoran.service.js";
 import { nilaiAturan } from "../persetujuan/persetujuan.service.js";
 
-export const NAMA_TIPE_JURNAL = { jurnal_umum: "Jurnal Umum", pencatatan_beban: "Pencatatan Beban", saldo_awal: "Saldo Awal" };
+export const NAMA_TIPE_JURNAL = {
+  jurnal_umum: "Jurnal Umum",
+  pencatatan_beban: "Pencatatan Beban",
+  saldo_awal: "Saldo Awal",
+  penerimaan: "Penerimaan",
+  pembayaran: "Pembayaran",
+  transfer_bank: "Transfer Bank",
+};
 export const NAMA_STATUS = { disetujui: "Disetujui", diajukan: "Menunggu persetujuan", ditolak: "Ditolak" };
 const TIPE_BEBAN = ["beban", "beban_lainnya", "beban_pokok_penjualan"];
+export const TIPE_KAS = ["penerimaan", "pembayaran", "transfer_bank"];
+// Sisi rincian yang diisi orang; baris akun kepala (otomatis) di sisi sebaliknya.
+const SISI_RINCIAN = { pencatatan_beban: "debit", pembayaran: "debit", transfer_bank: "debit", penerimaan: "kredit" };
+// Spec Tahap 2 §4.2: uang penjualan dan pembelian barang hanya dicatat di aplikasi Operasional.
+const TIPE_DARI_OPERASIONAL = ["piutang_usaha", "utang_usaha", "persediaan"];
+const LABEL_REKENING = { penerimaan: "Setor ke", pembayaran: "Bayar dari", transfer_bank: "Dari rekening" };
 const UKURAN = 50;
 
 const KEPALA = `
@@ -38,7 +56,10 @@ const RINCIAN = `
     from jurnal_baris b join akun a on a.id = b.akun_id left join departemen d on d.id = b.departemen_id
    where b.jurnal_id = $1 order by b.urutan`;
 
-/** Kepala + rincian. Pencatatan Beban: rincian tanpa baris otomatis (Hutang Beban), dengan `nilai`. */
+/**
+ * Kepala + rincian. Pencatatan Beban dan Kas & Bank: `baris` tanpa baris otomatis (akun kepala),
+ * dengan `nilai`. Transfer Bank juga membawa `akun_tujuan_id`, `akun_tujuan_nama`, dan `nilai`.
+ */
 export async function ambilJurnal(tipe, id, db = pool, { kunci = false } = {}) {
   pastikanId(id, "Transaksi tidak ditemukan.");
   const { rows } = await db.query(`${KEPALA} where j.id = $1 and ($2::text is null or j.tipe = $2)${kunci ? " for update of j" : ""}`, [id, tipe]);
@@ -46,7 +67,14 @@ export async function ambilJurnal(tipe, id, db = pool, { kunci = false } = {}) {
   if (!j) throw galat.tidakAda("Transaksi tidak ditemukan.");
   const { rows: baris } = await db.query(RINCIAN, [id]);
   j.semua_baris = baris;
-  j.baris = j.tipe === "pencatatan_beban" ? baris.filter((b) => !b.otomatis).map((b) => ({ ...b, nilai: b.debit })) : baris;
+  const sisi = SISI_RINCIAN[j.tipe];
+  j.baris = sisi ? baris.filter((b) => !b.otomatis).map((b) => ({ ...b, nilai: b[sisi] })) : baris;
+  if (j.tipe === "transfer_bank") {
+    const tujuan = j.baris[0];
+    j.akun_tujuan_id = tujuan?.akun_id ?? null;
+    j.akun_tujuan_nama = tujuan ? `${tujuan.akun_kode} ${tujuan.akun_nama}` : null;
+    j.nilai = tujuan?.nilai ?? null;
+  }
   return j;
 }
 
@@ -68,7 +96,11 @@ export async function daftarJurnal(tipe, { dari, sampai, status, cari, halaman =
   const { rows: jumlah } = await pool.query(`select count(*)::int as n from jurnal j ${where}`, nilai);
   const { rows } = await pool.query(
     `select j.id, j.nomor, to_char(j.tanggal, 'YYYY-MM-DD') as tanggal, j.keterangan, j.total::text as total, j.status,
-            pb.nama as dibuat_oleh_nama, la.kode || ' ' || la.nama as akun_lawan_nama
+            pb.nama as dibuat_oleh_nama, la.kode || ' ' || la.nama as akun_lawan_nama,
+            case when j.tipe = 'transfer_bank' then
+              (select a2.kode || ' ' || a2.nama from jurnal_baris b2 join akun a2 on a2.id = b2.akun_id
+                where b2.jurnal_id = j.id and not b2.otomatis order by b2.urutan limit 1)
+            end as akun_tujuan_nama
        from jurnal j left join pengguna pb on pb.id = j.dibuat_oleh left join akun la on la.id = j.akun_lawan_id
        ${where}
       order by j.tanggal desc, j.nomor desc nulls first, j.dibuat_at desc
@@ -80,14 +112,27 @@ export async function daftarJurnal(tipe, { dari, sampai, status, cari, halaman =
 
 /** Body browser → baris jurnal { akun_id, debit (sen), kredit (sen), departemen_id, catatan, otomatis }. */
 function susunBaris(tipe, body) {
-  if (tipe === "pencatatan_beban") {
+  if (tipe === "transfer_bank") {
+    const nilai = keSen(body.nilai);
+    if (nilai <= 0n) throw galat.permintaan("Nilai transfer harus lebih dari nol.");
+    return [
+      { akun_id: body.akun_tujuan_id, debit: nilai, kredit: 0n, departemen_id: null, catatan: "", otomatis: false },
+      { akun_id: body.akun_lawan_id, debit: 0n, kredit: nilai, departemen_id: null, catatan: "", otomatis: true },
+    ];
+  }
+  const sisi = SISI_RINCIAN[tipe];
+  if (sisi) {
+    const kataNilai = tipe === "pencatatan_beban" ? "nilai beban" : "nilai";
+    const di = (nilai) => (sisi === "debit" ? { debit: nilai, kredit: 0n } : { debit: 0n, kredit: nilai });
+    let total = 0n;
     const baris = body.baris.map((b, i) => {
       const nilai = keSen(b.nilai);
-      if (nilai <= 0n) throw galat.permintaan(`Baris ke-${i + 1}: nilai beban harus lebih dari nol.`);
-      return { akun_id: b.akun_id, debit: nilai, kredit: 0n, departemen_id: b.departemen_id, catatan: b.catatan, otomatis: false };
+      if (nilai <= 0n) throw galat.permintaan(`Baris ke-${i + 1}: ${kataNilai} harus lebih dari nol.`);
+      total += nilai;
+      return { akun_id: b.akun_id, ...di(nilai), departemen_id: b.departemen_id, catatan: b.catatan, otomatis: false };
     });
-    const total = baris.reduce((s, b) => s + b.debit, 0n);
-    baris.push({ akun_id: body.akun_lawan_id, debit: 0n, kredit: total, departemen_id: null, catatan: "", otomatis: true });
+    const lawan = sisi === "debit" ? { debit: 0n, kredit: total } : { debit: total, kredit: 0n };
+    baris.push({ akun_id: body.akun_lawan_id, ...lawan, departemen_id: null, catatan: "", otomatis: true });
     return baris;
   }
   return body.baris.map((b, i) => {
@@ -121,6 +166,26 @@ async function periksaAkunDanDepartemen(k, tipe, body, baris, sebelum) {
       const a = peta.get(b.akun_id);
       if (!TIPE_BEBAN.includes(a.tipe)) {
         throw galat.permintaan(`Akun ${a.kode} ${a.nama} bukan akun beban. Rincian Pencatatan Beban hanya untuk akun bertipe Beban, Beban Lainnya, atau Beban Pokok Penjualan.`);
+      }
+    }
+  }
+  if (TIPE_KAS.includes(tipe)) {
+    const rekening = tipe === "transfer_bank" ? [body.akun_lawan_id, body.akun_tujuan_id] : [body.akun_lawan_id];
+    if (rekening.some((id) => peta.get(id).tipe !== "kas_bank")) throw galat.permintaan("Rekening harus akun bertipe Kas & Bank.");
+    if (tipe === "transfer_bank" && body.akun_lawan_id === body.akun_tujuan_id) {
+      throw galat.permintaan("Rekening asal dan tujuan tidak boleh sama.");
+    }
+    if (tipe !== "transfer_bank") {
+      for (const b of baris.filter((x) => !x.otomatis)) {
+        const a = peta.get(b.akun_id);
+        if (a.tipe === "kas_bank") {
+          throw galat.permintaan(`Akun ${a.kode} ${a.nama} adalah rekening. Untuk memindah uang antar-rekening, pakai Transfer Bank.`);
+        }
+        if (TIPE_DARI_OPERASIONAL.includes(a.tipe)) {
+          throw galat.permintaan(
+            `Transaksi ini dicatat di aplikasi Operasional. Akun ${a.kode} ${a.nama} (${namaTipeAkun(a.tipe)}) terisi otomatis dari sana, jadi tidak diketik di sini.`,
+          );
+        }
       }
     }
   }
@@ -168,12 +233,18 @@ export function potretJurnal(j) {
     isi["Hutang beban"] = j.akun_lawan_nama;
     isi["Jatuh tempo"] = j.jatuh_tempo ? tanggalPanjang(j.jatuh_tempo) : "—";
   }
+  if (LABEL_REKENING[j.tipe]) isi[LABEL_REKENING[j.tipe]] = j.akun_lawan_nama ?? "—";
+  if (j.tipe === "transfer_bank") {
+    isi["Ke rekening"] = j.akun_tujuan_nama ?? "—";
+    return isi;
+  }
+  const bernilai = Boolean(SISI_RINCIAN[j.tipe]);
   isi.Rincian = j.semua_baris
     .filter((b) => !b.otomatis)
     .map((b) => {
       const debit = keSen(b.debit) > 0n;
       const nilai = rupiahTeks(debit ? b.debit : b.kredit);
-      return `${b.akun_kode} ${b.akun_nama}: ${j.tipe === "pencatatan_beban" ? nilai : `${debit ? "Debit" : "Kredit"} ${nilai}`}${b.departemen_nama ? `, ${b.departemen_nama}` : ""}${b.catatan ? ` (${b.catatan})` : ""}`;
+      return `${b.akun_kode} ${b.akun_nama}: ${bernilai ? nilai : `${debit ? "Debit" : "Kredit"} ${nilai}`}${b.departemen_nama ? `, ${b.departemen_nama}` : ""}${b.catatan ? ` (${b.catatan})` : ""}`;
     })
     .join("; ");
   return isi;
@@ -210,7 +281,7 @@ export async function simpanJurnal(req, tipe, id, body) {
     const kepala = [
       body.tanggal,
       body.keterangan,
-      tipe === "pencatatan_beban" ? body.akun_lawan_id : null,
+      tipe === "pencatatan_beban" || TIPE_KAS.includes(tipe) ? body.akun_lawan_id : null,
       tipe === "pencatatan_beban" ? body.jatuh_tempo : null,
       body.penomoran_id ?? sebelum?.penomoran_id ?? null,
       dariSen(debit),

@@ -25,7 +25,8 @@ const KUERI_AKUN = `
       from leluhur l left join mutasi m on m.akun_id = l.akun_id
      group by l.leluhur_id
   )
-  select a.id, a.kode, a.nama, a.tipe, a.induk_id, a.catatan, a.nonaktif,
+  select a.id, a.kode, a.nama, a.tipe, a.induk_id, a.catatan, a.nonaktif, a.bank_nama, a.nomor_rekening_akhir,
+         exists (select 1 from perusahaan p where p.akun_rekening_utama_id = a.id) as rekening_utama,
          s.dk::text as saldo_dk,
          exists (select 1 from akun c where c.induk_id = a.id) as punya_anak,
          exists (select 1 from jurnal_baris b join jurnal j on j.id = b.jurnal_id
@@ -59,6 +60,9 @@ async function muatAkun(db) {
         tingkat,
         catatan: a.catatan,
         nonaktif: a.nonaktif,
+        bank_nama: a.bank_nama,
+        nomor_rekening_akhir: a.nomor_rekening_akhir,
+        rekening_utama: a.rekening_utama,
         punya_anak: a.punya_anak,
         terpakai: a.terpakai,
         saldo: dariSen(saldoNormal(a.tipe, keSen(a.saldo_dk))),
@@ -92,13 +96,24 @@ const potret = (a) => ({
   "Tipe akun": a.tipe_nama,
   "Sub akun dari": a.induk_nama || "—",
   "Saldo awal": a.saldo_awal === null ? "—" : rupiahTeks(a.saldo_awal),
+  Bank: a.bank_nama || "—",
+  "Nomor rekening (4 angka terakhir)": a.nomor_rekening_akhir || "—",
   Catatan: a.catatan || "—",
   Status: a.nonaktif ? "Nonaktif" : "Aktif",
 });
 
+/** Nama pengaturan Preferensi yang memakai akun ini ("Rekening utama", …), atau null. */
 async function dipasangDiPreferensi(k, id) {
-  const { rows } = await k.query("select 1 from perusahaan where akun_ekuitas_saldo_awal_id = $1 or akun_laba_ditahan_id = $1", [id]);
-  return rows.length > 0;
+  const { rows } = await k.query(
+    `select (akun_ekuitas_saldo_awal_id = $1) as ekuitas, (akun_laba_ditahan_id = $1) as laba, (akun_rekening_utama_id = $1) as rekening
+       from perusahaan`,
+    [id],
+  );
+  const p = rows[0];
+  if (p?.ekuitas) return "Ekuitas Saldo Awal";
+  if (p?.laba) return "Laba Ditahan";
+  if (p?.rekening) return "Rekening utama";
+  return null;
 }
 
 async function periksaInduk(k, id, indukId, tipe) {
@@ -110,6 +125,11 @@ async function periksaInduk(k, id, indukId, tipe) {
   if (!induk) throw galat.permintaan("Akun induk tidak ditemukan.");
   if (induk.tipe !== tipe) {
     throw galat.permintaan(`Sub akun harus bertipe sama dengan induknya (${namaTipeAkun(induk.tipe)}).`);
+  }
+  // Akun di Preferensi harus tetap akun detail, supaya tetap bisa dipakai di jurnal.
+  const dipasang = await dipasangDiPreferensi(k, indukId);
+  if (dipasang) {
+    throw galat.bentrok(`Akun ${induk.kode} ${induk.nama} dipakai di Preferensi sebagai ${dipasang}, jadi tidak bisa dijadikan induk.`);
   }
   if (id) {
     const { rows: turunan } = await k.query(
@@ -175,6 +195,9 @@ export async function simpanAkun(req, id, body) {
     const sen = keSen(body.saldo_awal);
     if (sebelum) {
       if (sebelum.tipe !== body.tipe) {
+        if (sebelum.rekening_utama) {
+          throw galat.bentrok(`Akun ${sebelum.kode} ${sebelum.nama} dipakai di Preferensi sebagai Rekening utama, jadi tipenya tidak bisa diganti.`);
+        }
         if (sebelum.terpakai || sebelum.saldo_awal !== null) {
           throw galat.bentrok(`Tipe akun ${sebelum.kode} ${sebelum.nama} tidak bisa diganti karena sudah dipakai di transaksi atau punya saldo awal.`);
         }
@@ -183,21 +206,27 @@ export async function simpanAkun(req, id, body) {
       if (sebelum.punya_anak && sen !== 0n) {
         throw galat.permintaan("Akun induk tidak bisa diberi saldo awal. Isi saldo awal di sub akunnya.");
       }
-      if (body.nonaktif && !sebelum.nonaktif && (await dipasangDiPreferensi(k, id))) {
-        throw galat.bentrok(`Akun ${sebelum.kode} ${sebelum.nama} dipakai di Preferensi, jadi tidak bisa dinonaktifkan.`);
+      const dipasang = body.nonaktif && !sebelum.nonaktif ? await dipasangDiPreferensi(k, id) : null;
+      if (dipasang) {
+        throw galat.bentrok(`Akun ${sebelum.kode} ${sebelum.nama} dipakai di Preferensi sebagai ${dipasang}, jadi tidak bisa dinonaktifkan.`);
       }
     }
+    const kasBank = body.tipe === "kas_bank";
+    const bankNama = kasBank ? body.bank_nama : "";
+    const nomorAkhir = kasBank ? body.nomor_rekening_akhir : "";
     let akunId = id;
     try {
       if (id) {
         await k.query(
-          "update akun set kode = $2, nama = $3, tipe = $4, induk_id = $5, catatan = $6, nonaktif = $7, diubah_at = now() where id = $1",
-          [id, body.kode, body.nama, body.tipe, body.induk_id, body.catatan, body.nonaktif],
+          `update akun set kode = $2, nama = $3, tipe = $4, induk_id = $5, catatan = $6, nonaktif = $7, bank_nama = $8,
+                  nomor_rekening_akhir = $9, diubah_at = now() where id = $1`,
+          [id, body.kode, body.nama, body.tipe, body.induk_id, body.catatan, body.nonaktif, bankNama, nomorAkhir],
         );
       } else {
         const { rows } = await k.query(
-          "insert into akun (kode, nama, tipe, induk_id, catatan, nonaktif) values ($1, $2, $3, $4, $5, $6) returning id",
-          [body.kode, body.nama, body.tipe, body.induk_id, body.catatan, body.nonaktif],
+          `insert into akun (kode, nama, tipe, induk_id, catatan, nonaktif, bank_nama, nomor_rekening_akhir)
+           values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
+          [body.kode, body.nama, body.tipe, body.induk_id, body.catatan, body.nonaktif, bankNama, nomorAkhir],
         );
         akunId = rows[0].id;
       }
@@ -223,9 +252,8 @@ export async function hapusAkun(req, id) {
   return dalamTransaksi(async (k) => {
     const a = await ambilAkun(id, k);
     if (a.punya_anak) throw galat.bentrok(`Akun ${a.kode} ${a.nama} masih punya sub akun, jadi tidak bisa dihapus.`);
-    if (await dipasangDiPreferensi(k, id)) {
-      throw galat.bentrok(`Akun ${a.kode} ${a.nama} dipakai di Preferensi (Ekuitas Saldo Awal atau Laba Ditahan), jadi tidak bisa dihapus.`);
-    }
+    const dipasang = await dipasangDiPreferensi(k, id);
+    if (dipasang) throw galat.bentrok(`Akun ${a.kode} ${a.nama} dipakai di Preferensi sebagai ${dipasang}, jadi tidak bisa dihapus.`);
     if (a.terpakai || a.saldo_awal !== null) {
       throw galat.bentrok(`Akun ${a.kode} ${a.nama} sudah dipakai di transaksi atau punya saldo awal, jadi tidak bisa dihapus. Nonaktifkan saja supaya tidak bisa dipilih lagi.`);
     }

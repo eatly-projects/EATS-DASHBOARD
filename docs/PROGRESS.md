@@ -2,15 +2,76 @@
 
 > Catatan kronologis. Yang terbaru di atas.
 
-## 2026-11-24 — Tahap 2a: Kas & Bank dasar (branch `tahap-2a-kas-bank`, belum di-commit)
+## 2026-11-25 — Tahap 3a: penghubung Operasional dan Umur Piutang (di-push ke `main`)
+
+Permintaan Lutfi lewat sesi Operasional: "tolong konsultasikan dan langsung kerjakan saja". Ini langkah 3 rancangan
+`docs/superpowers/specs/2026-11-24-kas-bank-dan-sambungan-operasional-design.md` §5.1–5.2. Rencana kerjanya
+`docs/superpowers/plans/2026-11-25-tahap-3a-penghubung-umur-piutang.md` (cara Native), di branch
+`tahap-3a-umur-piutang`.
+
+- **Penghubung ke Operasional:**
+  - Backend EATS membaca `GET /api/eaats/piutang` dengan env `OPERASIONAL_API_URL` dan `OPERASIONAL_API_KEY`
+    (= `EAATS_API_KEY` di Operasional). Kunci tidak pernah ke browser.
+  - Pesan galat:
+    - "Kunci sambungan ke Operasional belum dipasang" (503);
+    - "Kunci sambungan ke Operasional salah" (502; sengaja bukan 401, karena 401 membuat pengguna EATS keluar).
+  - Kalau Operasional tidak bisa dihubungi, yang tampil data terakhir dari tabel `operasional_cadangan` beserta
+    waktunya. Ini mencakup waktu habis 20 detik, 5xx, dan isi yang bukan bentuk kontrak.
+  - Kalau ada cek Operasional yang gagal, angkanya tidak ditampilkan dan nama ceknya disebut.
+- **Penjualan › Umur Piutang** (menu baru, hak diatur lewat Akses Grup):
+  - Ringkasan per kelompok umur.
+  - Daftar per pelanggan yang bisa dibuka per dokumen.
+  - Saringan lini bisnis, termasuk "Tanpa lini bisnis".
+  - CO selalu "Belum ada jatuh tempo" (§97).
+  - Tulisan "Data ini hanya bisa diubah di aplikasi Operasional", tombol "Buka di Operasional" per dokumen, dan
+    "Diperbarui terakhir …".
+  - Dokumen lunas tidak ditampilkan; uang yang harus dikembalikan ke klien ditulis terpisah.
+- **Migrasi `006_operasional_cadangan.sql`:** terpasang di `finance_uji` dan `finance` (2026-11-25, izin Lutfi "silahkan push
+  dan lain sebagainya"). Schema lain tidak berubah, `finance_app` bisa menulis ke tabel baru, dan `uji:isolasi` lulus.
+  Migrasi dipasang sebelum push.
+
+**Diverifikasi:**
+- `npm run uji`: 177 tes lulus (sebelumnya 148). Tes baru `migrasi-006`, `operasional-klien`, dan `umur-piutang`
+  memakai server tiruan Operasional, tidak pernah Operasional sungguhan.
+- Tinjauan akhir oleh pemeriksa terpisah: tidak ada masalah kritis. Dua temuan diperbaiki, masing-masing dengan tes
+  yang gagal dulu:
+  - isi Operasional yang barisnya rusak sempat menimpa cadangan dan tidak jatuh ke data terakhir;
+  - jawaban 503 dari platform (bukan dari Operasional) terbaca sebagai "kunci belum dipasang".
+- Konsultasi dengan sesi Operasional: angka `*_rp` selalu rupiah bulat, jadi batas 2 desimal di EATS aman.
+- Lint berkas baru bersih, dan build client berhasil.
+- Di browser lokal (server tiruan 4921, server 4910, client 5178, akun uji sekali pakai yang sudah dihapus):
+  - angka sama dengan data tiruan;
+  - rincian dokumen tampil;
+  - tautan "Buka di Operasional" terbuka di tab baru;
+  - saringan Maklon berfungsi;
+  - 390 dan 820 px tidak melebar (diukur dengan skrip);
+  - pita "data terakhir" muncul setelah tiruan dimatikan.
+
+**Belum diverifikasi:**
+- Panggilan ke Operasional sungguhan: Lutfi membuka halamannya sendiri di Vercel (Claude tidak masuk dengan akun asli).
+- Tampilan dilihat langsung di HP sungguhan.
+
+**Kekurangan kecil yang ditunda:**
+- Kalau menyimpan cadangan gagal (gangguan database), halaman galat walau data langsung sudah ada. Cadangan juga
+  menyimpan seluruh jawaban setiap halaman dibuka.
+- Dua penyimpanan cadangan yang bersamaan bisa tertimpa jawaban yang lebih lama.
+- Kalau Operasional menggantung, menunggu 20 detik sebelum data terakhir tampil (tanpa cadangan sekitar 40 detik).
+- Saat saringan diganti, angka saringan lama tampil sebentar di bawah label baru selama memuat.
+- Permintaan ke Operasional mengikuti pengalihan alamat dan menerima `http://`.
+- Lini bisnis baru dari Operasional yang belum dikenal tampil sebagai kode mentah.
+- Teks kosong "di lini bisnis ini" juga muncul saat memilih Semua lini bisnis.
+- Setelah cek gagal lalu Operasional tidak terhubung, data lama dari sebelum cek gagal tampil lagi (dengan tanggalnya).
+
+## 2026-11-24 — Tahap 2a: Kas & Bank dasar (di-push ke `main`, commit 044fdf2)
 
 Rancangan Tahap 2 dan 3 disetujui Lutfi 2026-11-24 ("rancangan Tahap 2 dan 3 disetujui, dengan perbaikan dari sesi
 Operasional"): `docs/superpowers/specs/2026-11-24-kas-bank-dan-sambungan-operasional-design.md`. Ini langkah 1 dari
 urutan §6. Rencana kerjanya ada di `docs/superpowers/plans/2026-11-24-tahap-2a-kas-bank-dasar.md` dan dikerjakan
 dengan cara Native (pilihan Lutfi).
 
-**Migrasi `005_kas_bank.sql` baru terpasang di `finance_uji`.** Schema lain tidak berubah. Pemasangan ke `finance`
-menunggu izin Lutfi.
+**Migrasi `005_kas_bank.sql` terpasang di `finance_uji` dan `finance` (2026-11-24, izin Lutfi "ya dua duanya").**
+Schema lain tidak berubah. Di `finance`: rekening utama 110102 BCA, penomoran BM./BK./TB. ada, `finance_app` bisa
+membaca kolom baru, `uji:isolasi` lulus. Migrasi dipasang sebelum push supaya layar lama tidak error.
 
 - **Rekening:**
   - Akun bertipe Kas & Bank punya kolom "Nama bank" dan "Nomor rekening, 4 angka terakhir".

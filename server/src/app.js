@@ -26,6 +26,7 @@ import { jurnalUmumRouter, pembayaranRouter, pencatatanBebanRouter, penerimaanRo
 import { penyetujuRouter } from "./features/persetujuan/penyetuju.routes.js";
 import { persetujuanRouter } from "./features/persetujuan/persetujuan.routes.js";
 import { laporanKeuanganRouter } from "./features/laporan-keuangan/laporan-keuangan.routes.js";
+import { umurPiutangRouter } from "./features/umur-piutang/umur-piutang.routes.js";
 
 export function buatAplikasi() {
   const app = express();
@@ -75,6 +76,7 @@ export function buatAplikasi() {
   api.use("/penyetuju-transaksi", penyetujuRouter);
   api.use("/persetujuan", persetujuanRouter);
   api.use("/laporan-keuangan", laporanKeuanganRouter);
+  api.use("/umur-piutang", umurPiutangRouter);
 
   app.use("/api", batasApi, api);
   app.get("/", (_req, res) => kirim(res, { nama: "EATS Dashboard API", dokumentasi: "docs/PLANNING.md §6" }));

@@ -23,6 +23,7 @@ import { PenerimaanPage } from "@/pages/penerimaan/PenerimaanPage";
 import { PembayaranPage } from "@/pages/pembayaran/PembayaranPage";
 import { TransferBankPage } from "@/pages/transfer-bank/TransferBankPage";
 import { HistoriBankPage } from "@/pages/histori-bank/HistoriBankPage";
+import { UmurPiutangPage } from "@/pages/umur-piutang/UmurPiutangPage";
 import { TidakDitemukanPage } from "@/pages/tidak-ditemukan/TidakDitemukanPage";
 import { PerluHak } from "./ProtectedRoute";
 
@@ -45,6 +46,7 @@ export const RUTE_TAB = (
     <Route path="/kas-bank/pembayaran" element={<PerluHak menu="pembayaran"><PembayaranPage /></PerluHak>} />
     <Route path="/kas-bank/transfer-bank" element={<PerluHak menu="transfer_bank"><TransferBankPage /></PerluHak>} />
     <Route path="/kas-bank/histori-bank" element={<PerluHak menu="histori_bank"><HistoriBankPage /></PerluHak>} />
+    <Route path="/penjualan/umur-piutang" element={<PerluHak menu="umur_piutang"><UmurPiutangPage /></PerluHak>} />
     <Route path="/laporan/keuangan" element={<PerluHak menu="laporan_keuangan"><LaporanKeuanganPage /></PerluHak>} />
     <Route path="/laporan/unggah" element={<PerluHak menu="unggah_laporan"><UnggahPage /></PerluHak>} />
     <Route path="/laporan/unggah/:id" element={<PerluHak menu="unggah_laporan"><CekUnggahanPage /></PerluHak>} />

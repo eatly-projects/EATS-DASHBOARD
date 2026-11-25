@@ -61,6 +61,21 @@ export const MODUL = [
     ],
   },
   {
+    // Penjualan diinput di aplikasi Operasional; EATS hanya membaca (spec §5).
+    kode: "penjualan",
+    nama: "Penjualan",
+    menu: [
+      {
+        kode: "umur_piutang",
+        nama: "Umur Piutang",
+        jenis: "laporan",
+        path: "/penjualan/umur-piutang",
+        aksi: ["lihat"],
+        keteranganAksi: { lihat: "Melihat piutang klien dari aplikasi Operasional" },
+      },
+    ],
+  },
+  {
     kode: "laporan",
     nama: "Laporan",
     menu: [

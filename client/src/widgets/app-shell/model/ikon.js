@@ -9,6 +9,7 @@ import {
   FiBarChart2,
   FiBookOpen,
   FiBriefcase,
+  FiCalendar,
   FiCheckSquare,
   FiClock,
   FiEdit3,
@@ -19,6 +20,7 @@ import {
   FiList,
   FiPieChart,
   FiSettings,
+  FiShoppingBag,
   FiShield,
   FiSliders,
   FiThumbsUp,
@@ -27,7 +29,7 @@ import {
 } from "react-icons/fi";
 
 /** Ikon modul: dipakai judul kelompok di matriks Akses Grup. */
-export const IKON_MODUL = { pengaturan: FiSettings, perusahaan: FiBriefcase, buku_besar: FiBookOpen, kas_bank: FiCreditCard, laporan: FiPieChart };
+export const IKON_MODUL = { pengaturan: FiSettings, perusahaan: FiBriefcase, buku_besar: FiBookOpen, kas_bank: FiCreditCard, penjualan: FiShoppingBag, laporan: FiPieChart };
 
 export const ikonModul = (kode) => IKON_MODUL[kode] ?? FiFile;
 
@@ -48,6 +50,7 @@ export const IKON_MENU = {
   pembayaran: FiArrowUpCircle,
   transfer_bank: FiRepeat,
   histori_bank: FiClock,
+  umur_piutang: FiCalendar,
   ringkasan_laba_rugi: FiBarChart2,
   laporan_keuangan: FiPieChart,
   unggah_laporan: FiUploadCloud,
@@ -75,6 +78,7 @@ export const KETERANGAN_MENU = {
   pembayaran: "Catat uang keluar dari rekening atau kas, misalnya bayar listrik, gaji, atau melunasi utang beban",
   transfer_bank: "Pindahkan uang antar-rekening, misalnya mengisi kas kecil dari BCA",
   histori_bank: "Semua uang masuk dan keluar satu rekening, beserta saldo berjalannya",
+  umur_piutang: "Piutang klien dari aplikasi Operasional per pelanggan, dikelompokkan menurut lama telatnya",
   laporan_keuangan: "Neraca, Laba Rugi, Neraca Percobaan, Buku Besar, dan Jurnal; bisa diunduh Excel atau dicetak",
 };
 

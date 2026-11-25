@@ -242,7 +242,10 @@ Aturan tambahan:
 
 ### 5.2 Umur Piutang (bisa dibangun sekarang, dari §89)
 - Halaman baca-saja. Isinya ringkasan per pelanggan, rincian per dokumen, dan kelompok umur: belum jatuh tempo,
-  telat 1–30, 31–60, lebih dari 60 hari, dan "Belum ada jatuh tempo" (CO saat ini).
+  telat 1–30, 31–60, lebih dari 60 hari, dan "Belum ada jatuh tempo".
+- **CO tidak punya jatuh tempo dan tidak pernah dianggap telat** **(keputusan Lutfi atas permintaan Finance; §97 live
+  2026-11-25, merge 1689399, membatalkan §96 "CO + 20 hari")**. Di §89 CO selalu `jatuh_tempo: null` dengan kelompok
+  `tanpa_jatuh_tempo`, juga saat memakai `per_tanggal`. Invoice PO tetap punya jatuh tempo dan aturan telatnya.
 - Ada saringan per lini bisnis dari `segmen`, yang sudah ada di §89.
 - **Wajib:** tulisan "Data ini hanya bisa diubah di aplikasi Operasional", tombol "Buka di Operasional", dan
   keterangan "Diperbarui terakhir …" dari `generated_at`.
